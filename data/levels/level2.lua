@@ -1,0 +1,43 @@
+return {
+            music = "assets/music/level2.ogg",
+
+				sky = "assets/backgrounds/sky1.png",
+
+				background1 = "assets/backgrounds/mountains1.png",
+				background2 = "assets/backgrounds/trees1.png",
+
+				front = "assets/backgrounds/bushes1.png",
+
+				skyScrollSpeed = 15,
+				background1ScrollSpeed = 25,
+				background2ScrollSpeed = 60,
+				groundScrollSpeed = 120,
+				frontScrollSpeed = 180,
+
+				skyAutoScroll = true,
+				background1AutoScroll = true,
+				background2AutoScroll = true,
+				groundAutoScroll = true,
+				frontAutoScroll = true,
+
+            groundTop = 455,
+            groundVisualY = 395,
+            groundVisualHeight = 130,
+
+            generate_enemies = false,
+
+            min_spawn_delay = 0.9,
+            max_spawn_delay = 1.4,
+
+            enemies = {
+                {
+                    model = "Goblin",
+                },
+                {
+                    model = "Goblin",
+                },
+                {
+                    model = "Goblin",
+                }
+            }
+}

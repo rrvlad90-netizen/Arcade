@@ -1,0 +1,144 @@
+Поправил все что ты сказал. Работает хорошо. Один момент я заметил, когда игрок стоит на платформе или возвышенности он отображается с анимацией в прыжке
+
+Да, это ожидаемый баг из-за порядка обновления.
+
+Сейчас в main.lua порядок такой:
+
+lua
+player:update(dt)
+level:resolvePlayerPlatforms(player, previousPlayerX, previousPlayerY)
+А в Player:update() анимация выбирается до того, как платформа успевает поставить:
+
+lua
+player.onPlatform = true
+Поэтому игрок физически стоит на платформе, но анимация уже выбрана как jump.
+
+Исправим аккуратно.
+
+1. В player.lua добавь метод
+Добавь где-нибудь перед Player:update(dt):
+
+lua
+function Player:updateVisualState()
+    local move = 0
+
+    if love.keyboard.isDown("a") or love.keyboard.isDown("left") then
+        move = move - 1
+    end
+
+    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
+        move = move + 1
+    end
+
+    if self.hurt then
+        self:setState("pain")
+    elseif not self:isOnGround() then
+        self:setState("jump")
+    elseif self.attackTimer > 0 then
+        if self.alvaysRun then
+            self:setState("run_attack")
+        else
+            self:setState("attack")
+        end
+    elseif move ~= 0 or self.alvaysRun then
+        self:setState("walk")
+    else
+        self:setState("idle")
+    end
+end
+2. В Player:update(dt) замени блок выбора анимации
+Вот этот старый блок:
+
+lua
+-- Выбор текущей анимации
+if self.hurt then
+    self:setState("pain")
+elseif not self:isOnGround() then
+    self:setState("jump")
+elseif self.attackTimer > 0 then
+    if self.alvaysRun then
+        self:setState("run_attack")
+    else
+        self:setState("attack")
+    end
+elseif move ~= 0 or self.alvaysRun then
+    self:setState("walk")
+else
+    self:setState("idle")
+end
+замени на:
+
+lua
+self:updateVisualState()
+То есть конец Player:update(dt) должен быть так:
+
+lua
+self:updateVisualState()
+self:updateAnimation(dt)
+3. В main.lua после платформ обнови визуальное состояние
+Найди:
+
+lua
+level:resolvePlayerPlatforms(player, previousPlayerX, previousPlayerY)
+Сразу после него добавь:
+
+lua
+player:updateVisualState()
+Получится:
+
+lua
+player:update(dt)
+
+level:resolvePlayerPlatforms(player, previousPlayerX, previousPlayerY)
+player:updateVisualState()
+После этого:
+
+на земле будет idle/walk;
+на платформе будет idle/walk;
+на runner-уровне будет walk;
+в воздухе будет jump;
+атака на платформе тоже будет отображаться нормально.
+
+
+
+
+---------------------
+а, это хорошая схема. Я бы сделал оба варианта, но через один и тот же EnemySpawner.
+
+Как лучше организовать
+
+Бесконечный runner-уровень: enemySpawners полностью отвечает за врагов.
+Обычный уровень с волнами: enemies остаются как список/волна, а enemySpawners добавляет давление сверху.
+Spawner в конце экрана: ставим x = "right" или конкретный x, и он периодически создаёт врага.
+Spawner по времени: через startDelay, duration, spawnLimit.
+Spawner как OpenBOR unitcreator: фактически это он и есть — невидимый объект, который создаёт сущности.
+Пример гибридного уровня:
+
+lua
+generate_enemies = false,
+
+enemies = {
+    { model = "Goblin" },
+    { model = "Goblin" },
+    { model = "Shooter" },
+    { model = "Jumper" }
+},
+
+enemySpawners = {
+    {
+        x = "right",
+        offsetX = 40,
+
+        startDelay = 5,
+        minSpawnDelay = 4,
+        maxSpawnDelay = 7,
+
+        spawnLimit = 6,
+
+        enemies = {
+            { model = "Bat", spawnChance = 30 },
+            { model = "Slime", spawnChance = 50 },
+            { model = "BatBomber", spawnChance = 20 }
+        }
+    }
+}
