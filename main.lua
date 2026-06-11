@@ -133,6 +133,24 @@ local function enemyBulletHitSolidPlatform(bullet)
     return false
 end
 
+---эффект при ударе пули игрока о возвышенность
+local function removePlayerProjectilesBlockedByPlatforms()
+    for projectileIndex = #playerProjectiles, 1, -1 do
+        local projectile = playerProjectiles[projectileIndex]
+        local projectileHitbox = projectile:getHitbox()
+
+        for _, platform in ipairs(level.platforms or {}) do
+            if platform.solid
+                and rectsOverlap(projectileHitbox, platform:getHitbox())
+            then
+                addProjectileImpactEffect(projectile)
+                table.remove(playerProjectiles, projectileIndex)
+                break
+            end
+        end
+    end
+end
+
 ----Рисуем жизни игрока
 local function drawPlayerHealthBar(player, x, y)
     local barX = x + 90
@@ -375,7 +393,7 @@ function love.update(dt)
 
 ---создание проджектайла игрока (камней которыми он стреляет)
 	if player:consumeShotRequest() then
-		table.insert(playerProjectiles, PlayerProjectile:fromPlayer(player))
+		table.insert(playerProjectiles, PlayerProjectile:fromPlayer(player, "Stone"))
 	end
 
 ----обновление камней которые бросает игрок
@@ -389,7 +407,8 @@ function love.update(dt)
 	end
 
 ---удаляем пули и камни, которые врезались в возвышенность	
-	level:removeProjectilesBlockedByPlatforms(playerProjectiles, rectsOverlap)
+--level:removeProjectilesBlockedByPlatforms(playerProjectiles, rectsOverlap)--старое
+	removePlayerProjectilesBlockedByPlatforms()
 
 ---Цикл врагов и эффектов
 	for i = #enemies, 1, -1 do
@@ -440,17 +459,19 @@ for enemyIndex = #enemies, 1, -1 do
     for projectileIndex = #playerProjectiles, 1, -1 do
         local projectile = playerProjectiles[projectileIndex]
 
-------Уничтожение монстра от камня игрока
-        if enemy:isAlive()
-            and rectsOverlap(enemyHitbox, projectile:getHitbox())
-        then
-            if enemy:takeDamage(projectile.damage or 1) then
-                score = score + enemy.score
-            end
+------Блок столкновения playerProjectiles с врагами
+		if enemy:isAlive()
+			and rectsOverlap(enemyHitbox, projectile:getHitbox())
+		then
+			addProjectileImpactEffect(projectile)
 
-            table.remove(playerProjectiles, projectileIndex)
-            break
-        end
+			if enemy:takeDamage(projectile.damage or 1) then
+				score = score + enemy.score
+			end
+
+			table.remove(playerProjectiles, projectileIndex)
+			break
+		end
     end
 end
 ----Столкновение игрока с врагами

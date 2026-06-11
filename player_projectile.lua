@@ -1,9 +1,44 @@
+local ModelResolver = require("model_resolver")
+local PlayerProjectileModels = require("data.player_projectiles")
+
 local PlayerProjectile = {}
 PlayerProjectile.__index = PlayerProjectile
 
 local function fileExists(path)
     return path and love.filesystem.getInfo(path) ~= nil
 end
+
+
+--copy/resolve функции подгружают пули игрока
+local function copyTable(source)
+    local result = {}
+
+    for key, value in pairs(source or {}) do
+        result[key] = value
+    end
+
+    return result
+end
+
+local function resolveProjectileConfig(config)
+    if type(config) == "string" then
+        config = {
+            model = config
+        }
+    end
+
+    if config and config.model then
+        return ModelResolver.resolve(
+            config,
+            PlayerProjectileModels,
+            "player projectile"
+        )
+    end
+
+    return copyTable(config or {})
+end
+
+
 
 function PlayerProjectile:new(config)
     local projectile = setmetatable({}, PlayerProjectile)
@@ -15,6 +50,18 @@ function PlayerProjectile:new(config)
 
     projectile.vx = config.vx or config.speed or 420
     projectile.damage = config.damage or 1
+	
+	projectile.impactEffect = config.impactEffect
+    or config.impact_effect
+
+	projectile.impactOffsetX = config.impactOffsetX
+    or config.impact_offset_x
+    or 0
+
+projectile.impactOffsetY = config.impactOffsetY
+    or config.impact_offset_y
+    or 0
+
 
     projectile.imagePath = config.image
     projectile.image = nil
@@ -29,18 +76,25 @@ function PlayerProjectile:new(config)
     return projectile
 end
 
-function PlayerProjectile:fromPlayer(player)
-    return PlayerProjectile:new({
-        x = player.x + player.facing * 34,
-        y = player.y + 22,
-        w = 12,
-        h = 12,
-        vx = 420 * player.facing,
-        damage = 1,
+function PlayerProjectile:fromPlayer(player, projectileConfig)
+    local config = resolveProjectileConfig(projectileConfig or "Stone")
 
-        -- Если потом добавишь картинку:
-        -- image = "assets/projectiles/stone.png"
-    })
+    local speed = config.speed
+        or math.abs(config.vx or 420)
+
+    local spawnOffsetX = config.spawnOffsetX
+        or config.spawn_offset_x
+        or 34
+
+    local spawnOffsetY = config.spawnOffsetY
+        or config.spawn_offset_y
+        or 22
+
+    config.x = player.x + player.facing * spawnOffsetX
+    config.y = player.y + spawnOffsetY
+    config.vx = speed * player.facing
+
+    return PlayerProjectile:new(config)
 end
 
 function PlayerProjectile:update(dt)
