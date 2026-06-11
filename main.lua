@@ -291,17 +291,6 @@ function love.update(dt)
 
 ---удаляем пули и камни, которые врезались в возвышенность	
 	level:removeProjectilesBlockedByPlatforms(playerProjectiles, rectsOverlap)
-	
-------обьект спавна врагов
-	if not level:hasEnemySpawners() then
-		enemySpawnTimer = enemySpawnTimer - dt
-
-		if enemySpawnTimer <= 0 and level:canSpawnEnemies() then
-			spawnEnemy()
-			enemySpawnTimer = level:getSpawnDelay()
-		end
-	end
-
 
 ---Цикл врагов
 	for i = #enemies, 1, -1 do
@@ -400,16 +389,6 @@ end
         startLevelVictory()
         return
     end	
-
-if not level:hasLevelEnd() and level:isCompleted(#enemies) then
-        local nextLevel = levels:goNext()
-
-        if nextLevel then
-            switchToLevel(nextLevel)
-        else
-            gameFinished = true
-        end
-    end
 end
 
 

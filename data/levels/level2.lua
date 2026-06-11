@@ -30,14 +30,28 @@ return {
             max_spawn_delay = 1.4,
 
             enemies = {
-                {
-                    model = "Goblin",
-                },
-                {
-                    model = "Goblin",
-                },
-                {
-                    model = "Goblin",
-                }
-            }
+				{
+					model = "Goblin",
+					x = 520,
+					spawnDistance = 300
+				},
+				{
+					model = "Shooter",
+					x = 760,
+					spawnDistance = 300
+				},
+				{
+					model = "Bat",
+					x = 900,
+					y = 150,
+					spawnDistance = 300
+				},
+			levelEnd = {
+			model = "DefaultExit",
+			x = 900,
+			y = 360,
+			speed = 120,
+
+			ShowTimer = false
+			}
 }

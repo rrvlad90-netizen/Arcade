@@ -40,6 +40,12 @@ function LevelEnd:new(config)
     levelEnd.appearAfter = config.appearAfter
         or config.appear_after
         or 0
+		
+	-- Показывать ли HUD-таймер до появления выхода.
+    -- По умолчанию не показываем.
+    levelEnd.showTimer = config.ShowTimer == true
+        or config.showTimer == true
+        or config.show_timer == true	
 
     -- Скорость движения к игроку.
     -- Если 0, объект стоит на месте.
@@ -49,7 +55,7 @@ function LevelEnd:new(config)
     levelEnd.elapsed = 0
 
     -- Активен ли объект сейчас
-    levelEnd.active = false
+	levelEnd.active = levelEnd.appearAfter <= 0
 
     -- Был ли уже использован объект
     levelEnd.triggered = false
@@ -205,7 +211,8 @@ function LevelEnd:getAppearTimeRemaining()
 end
 
 function LevelEnd:shouldShowProgress()
-    return not self.triggered
+    return self.showTimer
+        and not self.triggered
         and self.appearAfter > 0
 end
 
@@ -213,7 +220,5 @@ function LevelEnd:isVisibleToPlayer()
     return self.active and not self.triggered
 end
 --------
-
-
 
 return LevelEnd
