@@ -280,7 +280,7 @@ function Animation:update(dt)
     return self:consumeEvents()
 end
 
-function Animation:draw(x, y, rotation, scaleX, scaleY, offsetX, offsetY)
+function Animation:draw(x, y, rotation, scaleX, scaleY, offsetX, offsetY, alpha)
     local image = self:getCurrentImage()
 
     rotation = rotation or 0
@@ -288,8 +288,9 @@ function Animation:draw(x, y, rotation, scaleX, scaleY, offsetX, offsetY)
     scaleY = scaleY or 1
     offsetX = offsetX or 0
     offsetY = offsetY or 0
+    alpha = alpha or 1
 
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.draw(
         image,
         x,
@@ -300,6 +301,8 @@ function Animation:draw(x, y, rotation, scaleX, scaleY, offsetX, offsetY)
         offsetX,
         offsetY
     )
+
+    love.graphics.setColor(1, 1, 1)
 end
 
 return Animation

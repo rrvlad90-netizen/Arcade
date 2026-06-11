@@ -172,14 +172,14 @@ function AnimationSet:update(dt)
     return self:consumeEvents()
 end
 
-function AnimationSet:draw(x, y, rotation, scaleX, scaleY, offsetX, offsetY)
+function AnimationSet:draw(x, y, rotation, scaleX, scaleY, offsetX, offsetY, alpha)
     local animation = self:getCurrentAnimation()
 
     if not animation then
         return
     end
 
-    animation:draw(x, y, rotation, scaleX, scaleY, offsetX, offsetY)
+    animation:draw(x, y, rotation, scaleX, scaleY, offsetX, offsetY, alpha)
 end
 
 return AnimationSet

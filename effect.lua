@@ -285,12 +285,20 @@ function Effect:isRemovable()
 end
 
 function Effect:draw()
-	if self.animationSet then
-		love.graphics.setColor(1, 1, 1, self.alpha) --self.alpha прозрачность
-		self.animationSet:draw(self.x, self.y)
-		love.graphics.setColor(1, 1, 1)
-		return
-	end
+if self.animationSet then
+    self.animationSet:draw(
+        self.x,
+        self.y,
+        0,
+        1,
+        1,
+        0,
+        0,
+        self.alpha --прозрачность
+    )
+
+    return
+end
 
 ----В мокапе учитываем прозрачность тоже
 	love.graphics.setColor(
