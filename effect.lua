@@ -133,6 +133,13 @@ function Effect:new(config)
     effect.effectSpawnRequests = {}
 
     effect.color = config.color or {0.8, 0.8, 0.8}
+-----прозрачность эффекта	
+	effect.alpha = config.alpha
+
+	if effect.alpha == nil then
+		effect.alpha = 1
+	end	
+	
 ------звук эффекта
 	effect.sound = config.sound
 		or config.soundPath
@@ -278,14 +285,22 @@ function Effect:isRemovable()
 end
 
 function Effect:draw()
-    if self.animationSet then
-        love.graphics.setColor(1, 1, 1)
-        self.animationSet:draw(self.x, self.y)
-        return
-    end
+	if self.animationSet then
+		love.graphics.setColor(1, 1, 1, self.alpha) --self.alpha прозрачность
+		self.animationSet:draw(self.x, self.y)
+		love.graphics.setColor(1, 1, 1)
+		return
+	end
 
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+----В мокапе учитываем прозрачность тоже
+	love.graphics.setColor(
+		self.color[1],
+		self.color[2],
+		self.color[3],
+		self.alpha
+	)
+
+	love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 
     love.graphics.setColor(1, 1, 1)
 end
