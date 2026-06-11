@@ -45,7 +45,8 @@ return {
 					x = 900,
 					y = 150,
 					spawnDistance = 300
-				},
+				}
+			},
 			levelEnd = {
 			model = "DefaultExit",
 			x = 900,
