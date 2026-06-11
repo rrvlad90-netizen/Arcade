@@ -142,6 +142,7 @@ local function getStateFallbackColor(state, baseColor)
         jump = {0.45, 0.75, 1.0},
         retreat = {0.95, 0.75, 0.25},
         taunt = {0.85, 0.25, 1.0},
+		turn = {0.6, 0.6, 1.0},		
         death = {0.45, 0.45, 0.45}
     }
 
@@ -328,6 +329,32 @@ function Enemy:new(config, x, groundTop)
     enemy.x = x
     enemy.w = config.w or 38
     enemy.h = config.h or 48
+		
+-- Направление движения и атаки.
+    -- -1: всегда влево.
+    --  1: всегда вправо.
+    --  0: идти и атаковать в сторону игрока.
+    enemy.MoveDirection = config.MoveDirection
+        or config.moveDirection
+        or config.move_direction
+        or -1
+
+    if enemy.MoveDirection ~= -1
+        and enemy.MoveDirection ~= 0
+        and enemy.MoveDirection ~= 1
+    then
+        enemy.MoveDirection = -1
+    end
+
+    -- Текущая сторона, куда смотрит враг.
+    -- Для MoveDirection = 0 она будет меняться по игроку.
+    enemy.facingDirection = enemy.MoveDirection
+
+    if enemy.facingDirection == 0 then
+        enemy.facingDirection = -1
+    end
+
+    enemy.pendingFacingDirection = nil	
 
     -- flying/canFly = true включает летающее поведение.
     -- Такой враг не стоит на groundTop и не зависит от гравитации.
@@ -602,6 +629,90 @@ function Enemy:isAlive()
     return not self.dead
 end
 
+
+-- Направление от врага к игроку.
+function Enemy:getDirectionToPlayer(player)
+    if not player then
+        return self.facingDirection or -1
+    end
+
+    local enemyCenterX = self.x + self.w / 2
+    local playerCenterX = player.x + player.w / 2
+
+    if playerCenterX < enemyCenterX then
+        return -1
+    end
+
+    return 1
+end
+
+-- Куда враг должен идти.
+function Enemy:getMoveDirection(player)
+    if self.MoveDirection == -1 or self.MoveDirection == 1 then
+        return self.MoveDirection
+    end
+
+    return self:getDirectionToPlayer(player)
+end
+
+-- Куда враг должен атаковать.
+function Enemy:getAttackDirection(player)
+    if self.MoveDirection == -1 or self.MoveDirection == 1 then
+        return self.MoveDirection
+    end
+
+    return self.facingDirection or self:getDirectionToPlayer(player)
+end
+
+-- Находится ли игрок с той стороны, куда враг может атаковать.
+function Enemy:isPlayerInAttackDirection(player)
+    if not player then
+        return false
+    end
+
+    local direction = self:getAttackDirection(player)
+    local enemyCenterX = self.x + self.w / 2
+    local playerCenterX = player.x + player.w / 2
+
+    if direction < 0 then
+        return playerCenterX <= enemyCenterX
+    end
+
+    return playerCenterX >= enemyCenterX
+end
+
+---функции поворота
+function Enemy:turnToDirection(direction)
+    if direction == 0 or direction == self.facingDirection then
+        return false
+    end
+
+    -- Если turn-анимации нет, просто мгновенно зеркалим врага.
+    if not self.animationSet or not self.animationSet:hasState("turn") then
+        self.facingDirection = direction
+        return false
+    end
+
+    self.pendingFacingDirection = direction
+    self:setState("turn")
+
+    return true
+end
+
+function Enemy:tryTurnToPlayer(player)
+    if self.MoveDirection ~= 0 then
+        return false
+    end
+
+    if not player then
+        return false
+    end
+
+    local direction = self:getDirectionToPlayer(player)
+
+    return self:turnToDirection(direction)
+end
+
 -- Возвращает базовое движение врага:
 -- наземный враг возвращается в walk,
 -- летающий — в fly.
@@ -713,6 +824,10 @@ function Enemy:isPlayerInMeleeRange(player)
         return false
     end
 
+    if not self:isPlayerInAttackDirection(player) then
+        return false
+    end
+
     return self:getEdgeDistanceToPlayer(player) <= self.meleeRange
 end
 
@@ -765,7 +880,7 @@ function Enemy:tryMeleeAttack(player, dt)
         return false
     end
 
-    local direction = self:getDirectionToPlayer(player)
+    local direction = self:getAttackDirection(player)
 
     local projectile = copyTable(self.meleeProjectile)
 
@@ -815,6 +930,11 @@ function Enemy:tryShoot(player, dt)
     if self.state ~= "walk" and self.state ~= "fly" then
         return false
     end
+	
+	---в какую сторону стрелять	
+	if not self:isPlayerInAttackDirection(player) then
+        return false
+    end
 
     if self:getDistanceToPlayer(player) > self.shootRange then
         return false
@@ -831,8 +951,8 @@ function Enemy:tryShoot(player, dt)
     if math.random() > self.shootChance then
         return false
     end
-
-    local direction = self:getDirectionToPlayer(player)
+---напрвление выстрела
+	local direction = self:getAttackDirection(player)
 	
 ----проджектайлы
 	local projectile = self.bulletProjectile or {}
@@ -1054,7 +1174,7 @@ function Enemy:tryJumpAttack(player, dt)
         return false
     end
 
-    local direction = self:getDirectionToPlayer(player)
+    local direction = self:getAttackDirection(player)
 
     self.jumpDirection = direction
     self.jumpHitPlayer = false
@@ -1106,6 +1226,22 @@ function Enemy:update(dt, player)
 
 			return
 		end
+		
+--------поворот		
+		if self.state == "turn" then
+				self:updateAnimation(dt)
+
+				if self.animationSet:isCurrentFinished() then
+					if self.pendingFacingDirection then
+						self.facingDirection = self.pendingFacingDirection
+						self.pendingFacingDirection = nil
+					end
+
+					self:setState(self:getMoveState())
+				end
+
+				return
+			end		
 
     -- Физика jumper-врага.
     if self.state == "jump" then
@@ -1128,7 +1264,13 @@ function Enemy:update(dt, player)
         return
     end
 
-    -- Основное движение walk/fly.
+--если нужно разворачиваемся
+	if self.state == "walk" or self.state == "fly" then
+        if self:tryTurnToPlayer(player) then
+            self:updateAnimation(dt)
+            return
+        end	
+    -- Основное движение walk/fly.	
     if self.state == "walk" or self.state == "fly" then
         if self:tryJumpAttack(player, dt) then
             self:updateAnimation(dt)
@@ -1158,14 +1300,18 @@ function Enemy:update(dt, player)
         end
 
         if self.state == "walk" or self.state == "fly" then
-            self.x = self.x - self.speed * dt
+            local moveDirection = self:getMoveDirection(player)
+
+			self.facingDirection = moveDirection
+			self.x = self.x + moveDirection * self.speed * dt
         end
 
     -- Отход назад.
     elseif self.state == "retreat" then
-        local move = self.retreatSpeed * dt
-        self.x = self.x + move
-        self.retreatMoved = self.retreatMoved + move
+			local move = self.retreatSpeed * dt
+
+			self.x = self.x - self.facingDirection * move
+			self.retreatMoved = self.retreatMoved + move
 
         if self.retreatMoved >= self.retreatDistance then
             self.retreatDistance = self.defaultRetreatDistance or self.retreatDistance
@@ -1240,7 +1386,13 @@ function Enemy:draw()
 		local drawX = self.x + self.offsetX
 		local drawY = self.y + self.offsetY
 
-		if self.flipImage then
+		local shouldFlipImage = self.flipImage == true
+
+		if self.facingDirection == 1 then
+			shouldFlipImage = not shouldFlipImage
+		end
+
+		if shouldFlipImage then
 			local animation = self.animationSet:getCurrentAnimation()
 			local image = nil
 

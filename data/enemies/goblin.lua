@@ -6,7 +6,8 @@ h = 52,
 					
 ----настройка вероятности появления монстра для generate режима
 spawnChance = 30,	
-health = 2,				
+health = 2,	
+showHealthBar = false,			
 					
 -----смещение картики (что бы в paint не ровнять)
 offsetX = 0,
@@ -23,6 +24,8 @@ retreatAfterMelee = true,
 meleeRetreatDistance = 45,
 retreat_speed = 180,
 
+MoveDirection = 0,
+flipImage = true,
 speed = 170,
 damage = 1,
 score = 2,
@@ -40,7 +43,15 @@ color = {0.8, 0.35, 0.2},
                 "assets/enemies/goblin/walk_2.png"
             }
         },
-
+		turn = {  --Если turn не укажешь то будет разворачиваться мгновенно без анимации.
+			loop = false,
+			holdLastFrame = true,
+			frameDuration = 0.08,
+			frames = {
+				"assets/enemies/goblin/walk_1.png",
+				"assets/enemies/goblin/walk_1.png"
+			}
+		},
         attack = {
             loop = false,
             frameDuration = 0.08,
