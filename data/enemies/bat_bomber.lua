@@ -86,7 +86,7 @@ return {
 					model = "BatCorpse",
 					offsetX = 0,
 					offsetY = -44,
-					vx = -80, --летит вправо.
+					--vx = 80, --летит вправо, можно не писать так как уже указанов эффекте для BatCorpse.
 					gravity = 900		
 				}
 			}
