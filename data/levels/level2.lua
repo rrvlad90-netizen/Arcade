@@ -26,30 +26,27 @@ return {
 
             generate_enemies = false,
 
-            min_spawn_delay = 0.9,
-            max_spawn_delay = 1.4,
-
             enemies = {
 				{
 					model = "Goblin",
 					x = 520,
-					spawnDistance = 300
+					spawnDistance = 800
 				},
 				{
 					model = "Shooter",
 					x = 760,
-					spawnDistance = 300
+					spawnDistance = 800
 				},
 				{
 					model = "Bat",
 					x = 900,
 					y = 150,
-					spawnDistance = 300
+					spawnDistance = 800
 				}
 			},
 			levelEnd = {
 			model = "DefaultExit",
-			x = 900,
+			x = 1900,
 			y = 360,
 			speed = 120,
 
