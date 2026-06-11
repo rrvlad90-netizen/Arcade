@@ -1265,13 +1265,14 @@ function Enemy:update(dt, player)
     end
 
 --если нужно разворачиваемся
-	if self.state == "walk" or self.state == "fly" then
+-- Основное движение walk/fly.
+    if self.state == "walk" or self.state == "fly" then
+        -- Если MoveDirection = 0 и игрок с другой стороны,
+        -- сначала проигрываем turn-анимацию.
         if self:tryTurnToPlayer(player) then
             self:updateAnimation(dt)
             return
-        end	
-    -- Основное движение walk/fly.	
-    if self.state == "walk" or self.state == "fly" then
+        end
         if self:tryJumpAttack(player, dt) then
             self:updateAnimation(dt)
             return

@@ -25,7 +25,7 @@ meleeRetreatDistance = 45,
 retreat_speed = 180,
 
 MoveDirection = 0,
-flipImage = true,
+--flipImage = true, --если неправильно нарисовал спрайт то его развернем
 speed = 170,
 damage = 1,
 score = 2,
