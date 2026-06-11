@@ -24,8 +24,6 @@ return {
             groundVisualY = 395,
             groundVisualHeight = 130,
 
-            generate_enemies = false,
-
             enemies = {
 				{
 					model = "Goblin",
