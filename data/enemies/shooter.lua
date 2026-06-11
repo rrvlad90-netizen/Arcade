@@ -1,31 +1,103 @@
 return {
 type = "shooter",
-sprite_folder = "assets/enemies/shooter",
-w = 42,
+---sprite_folder = "assets/enemies/goblin",
+w = 40,
 h = 52,
 
 ----настройка вероятности появления монстра для generate режима
-spawnChance = 15,
+spawnChance = 30,
+health = 2,
+showHealthBar = false,
 
 -----смещение картики (что бы в paint не ровнять)
 offsetX = 0,
-offsetY = -24,	
-
-
-attackEventFrame = 3,					
-speed = 90,
-damage = 1,
-score = 3,
+offsetY = -24,
 
 canShoot = true,
-shootChance = 0.4,
-shootCooldown = 1.5,
-shootRange = 500,
+shootRange = 600,
+shootChance = 1,
+shootCooldown = 1.4,
+shootStartDelay = 0.4,
 
-bulletModel = "FlyingShooterBullet",
+bulletModel = "ArcArrow",
+bulletSpeed = 240,
 
+MoveDirection = 0,
+--flipImage = true, --если неправильно нарисовал спрайт то его развернем
+speed = 170,
+damage = 1,
+score = 2,
 taunt = false,
-DissaperWheOutOfScreen = 100,
 
-color = {0.9, 0.25, 0.2}
+DissaperWheOutOfScreen = 100,
+color = {0.8, 0.35, 0.2},
+
+   animations = {
+        walk = {
+            loop = true,
+            frameDuration = 0.08,
+            frames = {
+                "assets/enemies/shooter/walk_1.png",
+                "assets/enemies/shooter/walk_2.png"
+            }
+        },
+		turn = {  --Если turn не укажешь то будет разворачиваться мгновенно без анимации.
+			loop = false,
+			holdLastFrame = true,
+			frameDuration = 0.08,
+			frames = {
+				"assets/enemies/shooter/walk_1.png",
+				"assets/enemies/shooter/walk_1.png"
+			}
+		},
+        attack = {
+            loop = false,
+            frameDuration = 0.08,
+            frames = {
+                "assets/enemies/shooter/walk_2.png",
+                "assets/enemies/shooter/walk_2.png"
+            },
+            events = {
+                {
+                    frame = 2,
+                    action = "sound",
+                    sound = "assets/sounds/sfx/drop.wav"
+                },
+                {
+                    frame = 2,
+                    action = "emitPendingProjectile"
+                }
+            }
+        },
+
+        death = {
+            loop = false,
+            holdLastFrame = true,
+            frameDuration = 0.1,
+
+            -- Важно: событие на 1 кадре должно сработать сразу при старте death.
+            fireFirstFrameEvents = true,
+
+            frames = {
+                "assets/enemies/shooter/death_1.png",
+                "assets/enemies/shooter/death_2.png",
+                "assets/enemies/shooter/death_3.png"
+            },
+            events = {
+                {
+                    frame = 1,
+                    action = "sound",
+                    sound = "assets/sounds/sfx/hit2.wav"
+                },
+				{
+					frame = 2,
+					action = "spawnEffect",
+					model = "Explosion",
+					offsetX = 0,
+					offsetY = -44,
+					--gravity = 0	 --можно не писать так как уже указанов эффекте для Explosion
+				}
+			}
+        }
+    }
 }
