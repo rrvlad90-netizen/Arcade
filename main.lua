@@ -2,6 +2,9 @@ local Player = require("player")
 local Enemy = require("enemy")
 local EnemyBullet = require("enemy_bullet")
 local PlayerProjectile = require("player_projectile")
+local Effect = require("effect")
+local EffectModels = require("data.effects")
+local ModelResolver = require("model_resolver")
 local Levels = require("levels")
 
 
@@ -15,6 +18,7 @@ local level
 local playerProjectiles = {}
 local enemies = {}
 local enemyBullets = {}
+local effects = {}
 
 local enemySpawnTimer = 0
 local score = 0
@@ -46,6 +50,24 @@ local function rectsOverlap(a, b)
         and b.x < a.x + a.w
         and a.y < b.y + b.h
         and b.y < a.y + a.h
+end
+------мокап эффекта
+local function createEffect(effectConfig)
+    local resolvedConfig = effectConfig
+
+    if effectConfig.model then
+        resolvedConfig = ModelResolver.resolve(
+            effectConfig,
+            EffectModels,
+            "effect"
+        )
+    end
+
+    return Effect:new(resolvedConfig)
+end
+
+local function addEffect(effectConfig)
+    table.insert(effects, createEffect(effectConfig))
 end
 
 
@@ -155,6 +177,7 @@ local function switchToLevel(nextLevel)
     playerProjectiles = {} --очищаем камни которые швыряет игрок
     enemies = {} --очищаем врагов
 	enemyBullets = {} --очищаем пули врага
+	effects = {} --очищаем эффекты
 	
     enemySpawnTimer = 0
 end
@@ -171,6 +194,7 @@ local function resetGame()
     playerProjectiles = {} --очищаем камни которые швыряет игрок
     enemies = {} --очищаем врагов
 	enemyBullets = {} --очищаем пули врага
+	effects = {} --очищаем эффекты
 
     enemySpawnTimer = 0
     score = 0
@@ -262,6 +286,19 @@ function love.update(dt)
 		)
 	end
 
+-----эффекты - дым, взрыв, искры, части тела врагов и т.д.
+	for i = #effects, 1, -1 do
+		local effect = effects[i]
+		effect:update(dt, level, rectsOverlap)
+
+		for _, effectRequest in ipairs(effect:consumeEffectSpawnRequests()) do
+			addEffect(effectRequest)
+		end
+
+		if effect:isRemovable() then
+			table.remove(effects, i)
+		end
+	end
 
 -----Позиция игрока
 	local previousPlayerX = player.x
@@ -292,7 +329,7 @@ function love.update(dt)
 ---удаляем пули и камни, которые врезались в возвышенность	
 	level:removeProjectilesBlockedByPlatforms(playerProjectiles, rectsOverlap)
 
----Цикл врагов
+---Цикл врагов и эффектов
 	for i = #enemies, 1, -1 do
 		local enemy = enemies[i]
 		enemy:update(dt, player)
@@ -301,6 +338,10 @@ function love.update(dt)
 
 		if shotRequest then
 			table.insert(enemyBullets, EnemyBullet:new(shotRequest))
+		end
+
+		for _, effectRequest in ipairs(enemy:consumeEffectSpawnRequests()) do
+			addEffect(effectRequest)
 		end
 
 		if enemy:isRemovable() then
@@ -404,9 +445,6 @@ function love.draw()
 	level:drawHealthPickups()	
 	level:drawLevelEnd()
 
-
-
-
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("A/D или стрелки — ходьба | Space — прыжок | J/K/L Ctrl — бросок", 20, 20)
     love.graphics.print("Счёт: " .. score, 20, 44)
@@ -424,7 +462,10 @@ function love.draw()
 	for _, projectile in ipairs(playerProjectiles) do
 		projectile:draw()
 	end
-
+----отрисовка эффектов	
+	for _, effect in ipairs(effects) do
+		effect:draw()
+	end	
 ---отрисовка врагов
     for _, enemy in ipairs(enemies) do
         enemy:draw()

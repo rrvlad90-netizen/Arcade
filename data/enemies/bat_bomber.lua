@@ -79,8 +79,18 @@ return {
                     frame = 1,
                     action = "sound",
                     sound = "assets/sounds/sfx/hit2.wav"
-                }
-            }
+                },
+				{
+					frame = 2,
+					action = "spawnEffect",
+					model = "BatCorpse",
+					offsetX = 0,
+					offsetY = -44,
+					vx = -80, --летит вправо.
+					gravity = 900		
+				}
+			}
         }
+			
     }
 }

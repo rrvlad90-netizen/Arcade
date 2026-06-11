@@ -457,6 +457,7 @@ function Enemy:new(config, x, groundTop)
 
     -- shotRequest забирает main.lua и создаёт EnemyBullet.
     enemy.shotRequest = nil
+	enemy.effectSpawnRequests = {}
 
     -- pendingAttackProjectile — подготовленный projectile.
     -- Он НЕ появляется сразу.
@@ -795,6 +796,26 @@ function Enemy:consumeShotRequest()
     return shotRequest
 end
 
+------функции эффектов
+function Enemy:spawnEffect(event)
+    local effectConfig = copyTable(event)
+
+    effectConfig.action = nil
+    effectConfig.frame = nil
+
+    effectConfig.x = self.x + (event.offsetX or event.offset_x or 0)
+    effectConfig.y = self.y + (event.offsetY or event.offset_y or 0)
+
+    table.insert(self.effectSpawnRequests, effectConfig)
+end
+
+function Enemy:consumeEffectSpawnRequests()
+    local requests = self.effectSpawnRequests
+    self.effectSpawnRequests = {}
+
+    return requests
+end
+-------
 -- Создаёт shotRequest из заранее подготовленного pendingAttackProjectile.
 -- Обычно вызывается animation event-ом emitPendingProjectile.
 function Enemy:emitPendingProjectile()
@@ -806,7 +827,7 @@ function Enemy:emitPendingProjectile()
     self.pendingAttackProjectile = nil
 end
 
--- Обработка одного animation event.
+-- Обработка одного animation event. тут и звуки и эффекты
 function Enemy:handleAnimationEvent(event)
     if event.action == "emitPendingProjectile" then
         self:emitPendingProjectile()
@@ -817,6 +838,11 @@ function Enemy:handleAnimationEvent(event)
         playSoundFile(event.sound)
         return
     end
+	
+	if event.action == "spawnEffect" then
+        self:spawnEffect(event)
+        return
+    end	
 
     -- Прямое создание projectile из animation config.
     -- Это пригодится для будущего OpenBOR-стиля:
