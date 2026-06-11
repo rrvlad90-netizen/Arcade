@@ -703,20 +703,22 @@ function Enemy:tryShoot(player, dt)
 		projectileVx = projectileSpeed * direction
 	end
 
-	self.pendingAttackProjectile = {
-		x = self.x + self.w / 2,
-		y = self.y + self.h / 2,
+	local projectileW = projectile.w or self.bulletW
+	local projectileH = projectile.h or self.bulletH
 
-		w = projectile.w or self.bulletW,
-		h = projectile.h or self.bulletH,
+	self.pendingAttackProjectile = copyTable(projectile)
 
-		vx = projectileVx,
-		vy = projectile.vy or 0,
+	self.pendingAttackProjectile.x = self.x + self.w / 2 - projectileW / 2
+	self.pendingAttackProjectile.y = self.y + self.h / 2 - projectileH / 2
+	self.pendingAttackProjectile.w = projectileW
+	self.pendingAttackProjectile.h = projectileH
 
-		damage = projectile.damage or self.bulletDamage,
-		image = projectile.image or self.bulletImage,
-		color = projectile.color
-	}
+	self.pendingAttackProjectile.vx = projectileVx
+	self.pendingAttackProjectile.vy = projectile.vy or 0
+
+	self.pendingAttackProjectile.damage = projectile.damage or self.bulletDamage
+	self.pendingAttackProjectile.image = projectile.image or self.bulletImage
+	self.pendingAttackProjectile.color = projectile.color
 
     self:setState("attack")
 
@@ -765,23 +767,22 @@ function Enemy:tryDropProjectile(player, dt)
 	local projectileW = projectile.w or self.dropW
 	local projectileH = projectile.h or self.dropH
 
-	self.pendingAttackProjectile = {
-		x = self.x + self.w / 2 - projectileW / 2,
-		y = self.y + self.h,
+	self.pendingAttackProjectile = copyTable(projectile)
 
-		w = projectileW,
-		h = projectileH,
+	self.pendingAttackProjectile.x = self.x + self.w / 2 - projectileW / 2
+	self.pendingAttackProjectile.y = self.y + self.h
+	self.pendingAttackProjectile.w = projectileW
+	self.pendingAttackProjectile.h = projectileH
 
-		vx = projectile.vx or 0,
-		vy = projectile.vy
-			or projectile.speedY
-			or projectile.dropSpeed
-			or self.dropSpeed,
+	self.pendingAttackProjectile.vx = projectile.vx or 0
+	self.pendingAttackProjectile.vy = projectile.vy
+		or projectile.speed
+		or projectile.dropSpeed
+		or self.dropSpeed
 
-		damage = projectile.damage or self.dropDamage,
-		image = projectile.image or self.dropImage,
-		color = projectile.color
-	}
+	self.pendingAttackProjectile.damage = projectile.damage or self.dropDamage
+	self.pendingAttackProjectile.image = projectile.image or self.dropImage
+	self.pendingAttackProjectile.color = projectile.color
 
     self:setState("attack")
 
