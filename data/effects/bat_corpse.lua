@@ -2,6 +2,9 @@ return {
     w = 70,
     h = 70,
 
+	sound = "assets/sounds/sfx/hit2.wav", --  создаётся и сразу проигрывает звук
+
+
 	loop = true,--чтобы труп не удалялся по завершению анимации, а жил до удара об землю нужно true
 	removeWhenAnimationFinished = false, -- а здесь false
 

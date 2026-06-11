@@ -1,7 +1,9 @@
 return {
     w = 64,
     h = 64,
-
+	
+	sound = "assets/sounds/sfx/hit2.wav", --  создаётся и сразу проигрывает звук
+		
     gravity = 0,
 
     removeWhenAnimationFinished = true,

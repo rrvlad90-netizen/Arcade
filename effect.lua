@@ -3,6 +3,21 @@ local AnimationSet = require("animation_set")
 local Effect = {}
 Effect.__index = Effect
 
+
+local function fileExists(path)
+    return path and love.filesystem.getInfo(path) ~= nil
+end
+
+local function playSoundFile(path)
+    if not fileExists(path) then
+        return
+    end
+
+    local sound = love.audio.newSource(path, "static")
+    sound:play()
+end
+
+
 local function copyTable(source)
     local result = {}
 
@@ -118,6 +133,15 @@ function Effect:new(config)
     effect.effectSpawnRequests = {}
 
     effect.color = config.color or {0.8, 0.8, 0.8}
+------звук эффекта
+	effect.sound = config.sound
+		or config.soundPath
+		or config.sound_path
+
+	if effect.sound then
+		playSoundFile(effect.sound)
+	end
+-----
 
     effect.animationSet = AnimationSet:new(createAnimationConfig({
         w = effect.w,
