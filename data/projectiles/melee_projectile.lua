@@ -1,6 +1,6 @@
 return {
-    w = 48,
-    h = 34,
+    w = 70,
+    h = 45,
 
     speed = 0,
     damage = 1,

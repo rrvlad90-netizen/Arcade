@@ -340,10 +340,7 @@ function Enemy:new(config, x, groundTop)
             or config.fly_height
             or 120
 
-        -- Для летающего врага можно задать:
-        -- y напрямую;
-        -- spawnY/spawn_y;
-        -- или flyHeight — высоту над землёй.
+-- Для летающего врага можно задать: y напрямую; spawnY/spawn_y; или flyHeight — высоту над землёй.
         enemy.y = config.y
             or config.spawnY
             or config.spawn_y
@@ -352,10 +349,7 @@ function Enemy:new(config, x, groundTop)
         enemy.y = groundTop - enemy.h
     end
 
-    -- Параметры полёта.
-    -- baseY — центральная высота.
-    -- flyAmplitude — амплитуда покачивания.
-    -- flyFrequency — частота покачивания.
+    -- Параметры полёта.baseY — центральная высота.flyAmplitude — амплитуда покачивания. flyFrequency — частота покачивания.
     enemy.baseY = enemy.y
     enemy.flyTimer = 0
     enemy.flyAmplitude = config.flyAmplitude
@@ -459,10 +453,58 @@ function Enemy:new(config, x, groundTop)
     enemy.shotRequest = nil
 	enemy.effectSpawnRequests = {}
 
-    -- pendingAttackProjectile — подготовленный projectile.
-    -- Он НЕ появляется сразу.
-    -- Он появится только когда attack-анимация дойдёт до нужного кадра.
+    -- pendingAttackProjectile — подготовленный projectile. Появляется когда attack-анимация дойдёт до нужного кадра.
     enemy.pendingAttackProjectile = nil
+
+
+-- Melee-атака.
+    -- Это отдельная логика ближнего боя.
+    -- Враг может одновременно уметь стрелять и бить вблизи.
+    enemy.canMeleeAttack = config.canMeleeAttack == true
+        or config.canMelee == true
+
+    enemy.meleeRange = config.meleeRange
+        or config.melee_range
+        or 70
+
+    enemy.meleeChance = config.meleeChance
+        or config.melee_chance
+        or 1
+
+    enemy.meleeCooldown = config.meleeCooldown
+        or config.melee_cooldown
+        or 0.7
+
+    enemy.meleeTimer = config.meleeStartDelay
+        or config.melee_start_delay
+        or 0
+
+    enemy.meleeProjectile = resolveProjectileConfig(
+        config.meleeProjectile
+            or config.meleeProjectileModel
+            or config.melee_projectile
+            or config.melee_projectile_model
+    )
+
+    -- Смещение hitbox melee-удара.
+    -- Обычно лучше задавать прямо в модели projectile через spawnOffsetX/Y.
+    enemy.meleeOffsetX = config.meleeOffsetX
+        or config.melee_offset_x
+        or 0
+
+    enemy.meleeOffsetY = config.meleeOffsetY
+        or config.melee_offset_y
+        or 0
+
+-- Если true, после melee-удара враг отходит назад.
+    enemy.retreatAfterMelee = config.retreatAfterMelee == true
+        or config.retreat_after_melee == true
+
+    enemy.meleeRetreatDistance = config.meleeRetreatDistance
+        or config.melee_retreat_distance
+        or enemy.retreatDistance
+        or 70
+-----------
 
     -- Jumper-поведение.
     enemy.canJumpAttack = config.canJumpAttack == true
@@ -641,6 +683,39 @@ function Enemy:getDistanceToPlayer(player)
     return math.abs(enemyCenterX - playerCenterX)
 end
 
+
+-- Расстояние между краями hitbox по X.
+-- Для melee это лучше, чем расстояние между центрами.
+function Enemy:getEdgeDistanceToPlayer(player)
+    if not player then
+        return math.huge
+    end
+
+    local enemyLeft = self.x
+    local enemyRight = self.x + self.w
+
+    local playerLeft = player.x
+    local playerRight = player.x + player.w
+
+    if enemyRight < playerLeft then
+        return playerLeft - enemyRight
+    end
+
+    if playerRight < enemyLeft then
+        return enemyLeft - playerRight
+    end
+
+    return 0
+end
+--если игрок в зоне удара
+function Enemy:isPlayerInMeleeRange(player)
+    if not self.canMeleeAttack or not player then
+        return false
+    end
+
+    return self:getEdgeDistanceToPlayer(player) <= self.meleeRange
+end
+
 -- Направление к игроку:
 -- -1 значит игрок слева,
 --  1 значит игрок справа.
@@ -657,6 +732,75 @@ function Enemy:getDirectionToPlayer(player)
     end
 
     return -1
+end
+
+
+-- Попытка начать melee-атаку.
+function Enemy:tryMeleeAttack(player, dt)
+    if not self.canMeleeAttack or not player then
+        return false
+    end
+
+    if not self.meleeProjectile then
+        return false
+    end
+
+    if self.state ~= "walk" and self.state ~= "fly" then
+        return false
+    end
+
+    if not self:isPlayerInMeleeRange(player) then
+        return false
+    end
+
+    self.meleeTimer = self.meleeTimer - dt
+
+    if self.meleeTimer > 0 then
+        return false
+    end
+
+    self.meleeTimer = self.meleeCooldown
+
+    if math.random() > self.meleeChance then
+        return false
+    end
+
+    local direction = self:getDirectionToPlayer(player)
+
+    local projectile = copyTable(self.meleeProjectile)
+
+    local projectileW = projectile.w or projectile.width or 40
+    local projectileH = projectile.h or projectile.height or self.h
+
+    local spawnOffsetX = projectile.spawnOffsetX
+        or projectile.spawn_offset_x
+        or self.meleeOffsetX
+        or 0
+
+    local spawnOffsetY = projectile.spawnOffsetY
+        or projectile.spawn_offset_y
+        or self.meleeOffsetY
+        or 0
+
+    projectile.w = projectileW
+    projectile.h = projectileH
+
+    if direction < 0 then
+        projectile.x = self.x - projectileW - spawnOffsetX
+    else
+        projectile.x = self.x + self.w + spawnOffsetX
+    end
+
+    projectile.y = self.y + self.h / 2 - projectileH / 2 + spawnOffsetY
+
+    projectile.vx = projectile.vx or 0
+    projectile.vy = projectile.vy or 0
+    projectile.damage = projectile.damage or self.damage
+
+    self.pendingAttackProjectile = projectile
+    self:setState("attack")
+
+    return true
 end
 
 -- Попытка начать shooter-атаку.
@@ -944,16 +1088,24 @@ function Enemy:update(dt, player)
 
     -- attack теперь завершается концом attack-анимации,
     -- а не отдельным attackTimer.
-    if self.state == "attack" then
-        self:updateAnimation(dt)
+	if self.state == "attack" then
+			self:updateAnimation(dt)
 
-        if self.animationSet:isCurrentFinished() then
-            self.pendingAttackProjectile = nil
-            self:setState(self:getMoveState())
-        end
+			if self.animationSet:isCurrentFinished() then
+				self.pendingAttackProjectile = nil
 
-        return
-    end
+				if self.retreatAfterMelee then
+					self.retreatMoved = 0
+					self.retreatDistance = self.meleeRetreatDistance
+					self.retreatThenTaunt = false
+					self:setState("retreat")
+				else
+					self:setState(self:getMoveState())
+				end
+			end
+
+			return
+		end
 
     -- Физика jumper-врага.
     if self.state == "jump" then
@@ -979,6 +1131,18 @@ function Enemy:update(dt, player)
     -- Основное движение walk/fly.
     if self.state == "walk" or self.state == "fly" then
         if self:tryJumpAttack(player, dt) then
+            self:updateAnimation(dt)
+            return
+        end
+
+		if self:tryMeleeAttack(player, dt) then
+            self:updateAnimation(dt)
+            return
+        end
+
+        -- Если враг уже в melee-дистанции, он ждёт cooldown удара
+        -- и не проходит сквозь игрока.
+        if self:isPlayerInMeleeRange(player) then
             self:updateAnimation(dt)
             return
         end
