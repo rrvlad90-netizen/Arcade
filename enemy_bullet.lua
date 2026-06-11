@@ -46,12 +46,38 @@ function EnemyBullet:new(config)
 
     bullet.color = config.color or {1.0, 0.25, 0.2}
 
+	bullet.alpha = config.alpha--прозрачность
+
+	if bullet.alpha == nil then
+		bullet.alpha = 1
+	end
+
+	bullet.dissapearbytime = config.dissapearbytime
+		or config.disappearByTime
+		or config.disappear_by_time
+		or 0
+
+	bullet.age = 0
+	bullet.dead = false
+
     return bullet
 end
 
 function EnemyBullet:update(dt)
+    if self.dead then
+        return
+    end
+
+    self.age = self.age + dt
+
     self.x = self.x + self.vx * dt
     self.y = self.y + self.vy * dt
+
+    if self.dissapearbytime > 0
+        and self.age >= self.dissapearbytime
+    then
+        self.dead = true
+    end
 end
 
 function EnemyBullet:isOffscreen()
@@ -62,6 +88,10 @@ function EnemyBullet:isOffscreen()
         or self.x > screenWidth + 100
         or self.y + self.h < -100
         or self.y > screenHeight + 100
+end
+--исчезает через время (для melee атаки)
+function EnemyBullet:isRemovable()
+    return self.dead or self:isOffscreen()
 end
 
 function EnemyBullet:getHitbox()
@@ -75,7 +105,7 @@ end
 
 function EnemyBullet:draw()
     if self.image then
-        love.graphics.setColor(1, 1, 1)
+		love.graphics.setColor(1, 1, 1, self.alpha)
         love.graphics.draw(
             self.image,
             self.x,
@@ -87,12 +117,19 @@ function EnemyBullet:draw()
 
         return
     end
-
-    love.graphics.setColor(self.color)
+--мокап
+	love.graphics.setColor(
+		self.color[1],
+		self.color[2],
+		self.color[3],
+		self.alpha
+	)
     love.graphics.circle("fill", self.x + self.w / 2, self.y + self.h / 2, self.w / 2)
 
-    love.graphics.setColor(0.25, 0.05, 0.04)
+	love.graphics.setColor(0.25, 0.05, 0.04, self.alpha)
     love.graphics.circle("line", self.x + self.w / 2, self.y + self.h / 2, self.w / 2)
 end
+
+love.graphics.setColor(1, 1, 1)
 
 return EnemyBullet

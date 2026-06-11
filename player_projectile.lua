@@ -72,6 +72,21 @@ projectile.impactOffsetY = config.impactOffsetY
 
     projectile.color = config.color or {0.55, 0.48, 0.38}
     projectile.outlineColor = config.outlineColor or {0.25, 0.22, 0.18}
+----прозрачность	
+	projectile.alpha = config.alpha
+
+	if projectile.alpha == nil then
+		projectile.alpha = 1
+	end
+------
+	projectile.dissapearbytime = config.dissapearbytime
+		or config.disappearByTime
+		or config.disappear_by_time
+		or 0
+
+	projectile.age = 0
+	projectile.dead = false	
+	
 
     return projectile
 end
@@ -98,7 +113,18 @@ function PlayerProjectile:fromPlayer(player, projectileConfig)
 end
 
 function PlayerProjectile:update(dt)
+    if self.dead then
+        return
+    end
+
+    self.age = self.age + dt
     self.x = self.x + self.vx * dt
+
+    if self.dissapearbytime > 0
+        and self.age >= self.dissapearbytime
+    then
+        self.dead = true
+    end
 end
 
 function PlayerProjectile:isOffscreen(screenWidth)
@@ -106,6 +132,10 @@ function PlayerProjectile:isOffscreen(screenWidth)
 
     return self.x + self.w < -30
         or self.x > screenWidth + 30
+end
+
+function PlayerProjectile:isRemovable(screenWidth)
+    return self.dead or self:isOffscreen(screenWidth)
 end
 
 function PlayerProjectile:getHitbox()
@@ -119,7 +149,7 @@ end
 
 function PlayerProjectile:draw()
     if self.image then
-        love.graphics.setColor(1, 1, 1)
+		love.graphics.setColor(1, 1, 1, self.alpha)
         love.graphics.draw(
             self.image,
             self.x,
@@ -128,17 +158,30 @@ function PlayerProjectile:draw()
             self.w / self.image:getWidth(),
             self.h / self.image:getHeight()
         )
-
+		love.graphics.setColor(1, 1, 1)
+		
         return
     end
+--мокап
+	love.graphics.setColor(
+		self.color[1],
+		self.color[2],
+		self.color[3],
+		self.alpha ---прозрачность
+	)
 
-    love.graphics.setColor(self.color)
-    love.graphics.circle("fill", self.x + self.w / 2, self.y + self.h / 2, 7)
+	love.graphics.circle("fill", self.x + self.w / 2, self.y + self.h / 2, 7)
 
-    love.graphics.setColor(self.outlineColor)
+	love.graphics.setColor(
+		self.outlineColor[1],
+		self.outlineColor[2],
+		self.outlineColor[3],
+		self.alpha
+	)
     love.graphics.circle("line", self.x + self.w / 2, self.y + self.h / 2, 7)
 
-    love.graphics.setColor(1, 1, 1)
 end
+
+    love.graphics.setColor(1, 1, 1)
 
 return PlayerProjectile

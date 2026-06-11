@@ -400,8 +400,8 @@ function love.update(dt)
 	for i = #playerProjectiles, 1, -1 do
 		local projectile = playerProjectiles[i]
 		projectile:update(dt)
-
-		if projectile:isOffscreen(screenWidth) then
+---удаление камней которые бросает игрок
+		if projectile:isRemovable(screenWidth) then
 			table.remove(playerProjectiles, i)
 		end
 	end
@@ -442,7 +442,8 @@ level:resolveEnemyPlatforms(enemies, rectsOverlap)
 		then
 			addProjectileImpactEffect(bullet)
 			table.remove(enemyBullets, i)
-		elseif bullet:isOffscreen() then
+---удаление пуль врагов			
+		elseif bullet:isRemovable() then
 			table.remove(enemyBullets, i)
 		end
 	end
