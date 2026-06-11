@@ -17,6 +17,26 @@ function EnemyBullet:new(config)
 	bullet.vy = config.vy or 0   ---снаряд падает с неба
 	bullet.damage = config.damage or 1
 
+	-- Эффект при попадании/ударе.
+	bullet.impactEffect = config.impactEffect
+		or config.impact_effect
+
+	bullet.impactOffsetX = config.impactOffsetX
+		or config.impact_offset_x
+		or 0
+
+	bullet.impactOffsetY = config.impactOffsetY
+		or config.impact_offset_y
+		or 0
+
+	-- Если true, projectile проверяет удар о землю.
+	bullet.collideGround = config.collideGround == true
+		or config.collide_ground == true
+
+	-- Если true, projectile проверяет удар о solid-платформы/возвышенности.
+	bullet.collidePlatforms = config.collidePlatforms == true
+		or config.collide_platforms == true
+
     bullet.imagePath = config.image
     bullet.image = nil
 

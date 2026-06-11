@@ -51,8 +51,14 @@ local function rectsOverlap(a, b)
         and a.y < b.y + b.h
         and b.y < a.y + a.h
 end
-------мокап эффекта
+------эффекта
 local function createEffect(effectConfig)
+    if type(effectConfig) == "string" then
+        effectConfig = {
+            model = effectConfig
+        }
+    end
+
     local resolvedConfig = effectConfig
 
     if effectConfig.model then
@@ -70,6 +76,62 @@ local function addEffect(effectConfig)
     table.insert(effects, createEffect(effectConfig))
 end
 
+---функция эффекта попадания projectile
+local function addProjectileImpactEffect(projectile)
+    if not projectile.impactEffect then
+        return
+    end
+
+    local effectConfig = projectile.impactEffect
+
+    if type(effectConfig) == "string" then
+        effectConfig = {
+            model = effectConfig
+        }
+    else
+        local copy = {}
+
+        for key, value in pairs(effectConfig) do
+            copy[key] = value
+        end
+
+        effectConfig = copy
+    end
+
+    effectConfig.x = projectile.x + projectile.w / 2 + projectile.impactOffsetX
+    effectConfig.y = projectile.y + projectile.h / 2 + projectile.impactOffsetY
+
+    addEffect(effectConfig)
+end
+
+
+--проверка удара projectile о землю
+local function enemyBulletHitGround(bullet)
+    if not bullet.collideGround then
+        return false
+    end
+
+    return bullet.y + bullet.h >= level.groundTop
+end
+
+--проверка удара projectile о возвышенность
+local function enemyBulletHitSolidPlatform(bullet)
+    if not bullet.collidePlatforms then
+        return false
+    end
+
+    local bulletHitbox = bullet:getHitbox()
+
+    for _, platform in ipairs(level.platforms or {}) do
+        if platform.solid
+            and rectsOverlap(bulletHitbox, platform:getHitbox())
+        then
+            return true
+        end
+    end
+
+    return false
+end
 
 ----Рисуем жизни игрока
 local function drawPlayerHealthBar(player, x, y)
@@ -351,12 +413,17 @@ function love.update(dt)
 
 level:resolveEnemyPlatforms(enemies, rectsOverlap)
 
------Обновление вражеских пуль
+-----Обновление вражеских пуль проверка их удара об землю и возвышенность
 	for i = #enemyBullets, 1, -1 do
 		local bullet = enemyBullets[i]
 		bullet:update(dt)
 
-		if bullet:isOffscreen() then
+		if enemyBulletHitGround(bullet)
+			or enemyBulletHitSolidPlatform(bullet)
+		then
+			addProjectileImpactEffect(bullet)
+			table.remove(enemyBullets, i)
+		elseif bullet:isOffscreen() then
 			table.remove(enemyBullets, i)
 		end
 	end
@@ -414,13 +481,14 @@ local playerHitboxForBullets = player:getHitbox()
 for i = #enemyBullets, 1, -1 do
     local bullet = enemyBullets[i]
 
-    if player:canTakeDamage()
-        and rectsOverlap(playerHitboxForBullets, bullet:getHitbox())
-    then
-        player:takeDamage(bullet.damage)
-        table.remove(enemyBullets, i)
-        break
-    end
+	if player:canTakeDamage()
+		and rectsOverlap(playerHitboxForBullets, bullet:getHitbox())
+	then
+		addProjectileImpactEffect(bullet)
+		player:takeDamage(bullet.damage)
+		table.remove(enemyBullets, i)
+		break
+	end
 end	
 	
 	
