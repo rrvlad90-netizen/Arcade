@@ -1,4 +1,4 @@
-local Platform = require("platform")
+﻿local Platform = require("platform")
 local Hazard = require("hazard")
 local HealthPickup = require("health_pickup")
 local Decor = require("decor")
@@ -13,7 +13,6 @@ local DecorModels = require("data.decors")
 local HazardModels = require("data.hazards")
 local PlatformModels = require("data.platforms")
 local LevelEndModels = require("data.level_ends")
-
 
 local Level = {}
 Level.__index = Level
