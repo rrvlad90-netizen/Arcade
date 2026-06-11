@@ -141,12 +141,17 @@ function Level:new(config)
 	level.background2OffsetX = 0
 	level.groundOffsetX = 0
 	level.frontOffsetX = 0
----Враги уровня
-	level.enemies = ModelResolver.resolveList(
-		config.enemies,
+-- Враги, расставленные на уровне.
+-- Они создаются не сразу, а когда игрок подошёл к точке спавна.
+	level.enemyPlacements = ModelResolver.resolveList(
+		config.enemies or config.enemyPlacements or config.enemy_placements,
 		EnemyModels,
 		"enemy"
 	)
+
+	for _, enemyPlacement in ipairs(level.enemyPlacements) do
+		enemyPlacement.spawned = false
+	end
 ----Спавнеры врагов: автоматическая генерация монстров.
 	level.enemySpawners = {}
 
@@ -193,12 +198,13 @@ end
 -- Запуск уровня.Сбрасываем состояние уровня, ручной список врагов, спавнеры и запускаем музыку.
 function Level:start()
     self.elapsed = 0
-	self.nextEnemyIndex = 1
     self.skyOffsetX = 0
     self.background1OffsetX = 0
     self.background2OffsetX = 0
     self.groundOffsetX = 0
     self.frontOffsetX = 0
+	
+
 
     if self.music then
         self.music:stop()
@@ -208,6 +214,10 @@ function Level:start()
 	for _, spawner in ipairs(self.enemySpawners) do
 		spawner:reset()
 	end
+-- Сбрасываем всех врагов при старте/рестарте уровня.	
+	for _, enemyPlacement in ipairs(self.enemyPlacements) do
+		enemyPlacement.spawned = false
+	end	
 
 	self.enemySpawnRequests = {}	
 	
@@ -232,6 +242,8 @@ function Level:update(dt, player)
 			table.insert(self.enemySpawnRequests, request)
 		end
 	end	
+
+	self:updateEnemyPlacements(player)	
 -- Если skyAutoScroll включён, sky сам двигается.
     -- Положительная скорость двигает картинку справа налево.
     if self.skyAutoScroll then
@@ -332,19 +344,37 @@ function Level:drawScrollableImage(image, offsetX, screenWidth, screenHeight)
     end
 end
 
+----обновить место расстановки монстров
+function Level:updateEnemyPlacements(player)
+    if not player then
+        return
+    end
+
+    local playerCenterX = player.x + player.w / 2
+
+    for _, enemyPlacement in ipairs(self.enemyPlacements) do
+        if not enemyPlacement.spawned then
+            local spawnX = enemyPlacement.x or love.graphics.getWidth() + 20
+
+            local spawnDistance = enemyPlacement.spawnDistance
+                or enemyPlacement.spawn_distance
+                or 300
+
+            if math.abs(playerCenterX - spawnX) <= spawnDistance then
+                enemyPlacement.spawned = true
+
+                table.insert(self.enemySpawnRequests, {
+                    config = enemyPlacement,
+                    x = spawnX
+                })
+            end
+        end
+    end
+end
+
 
 function Level:hasEnemySpawners()
     return #self.enemySpawners > 0
-end
-
-------Если на уровне нет спавнеров и нет LevelEnd то закончим когда кончатся монстры
-function Level:isCompleted(activeEnemyCount)
-    if self:hasEnemySpawners() then
-        return false
-    end
-
-    return self.nextEnemyIndex > #self.enemies
-        and activeEnemyCount == 0
 end
 
 -- Рисуем фон уровня.

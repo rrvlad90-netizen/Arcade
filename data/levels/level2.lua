@@ -28,18 +28,18 @@ return {
 				{
 					model = "Goblin",
 					x = 520,
-					spawnDistance = 800
+					spawnDistance = 700
 				},
 				{
 					model = "Shooter",
 					x = 760,
-					spawnDistance = 800
+					spawnDistance = 700
 				},
 				{
 					model = "Bat",
 					x = 900,
 					y = 150,
-					spawnDistance = 800
+					spawnDistance = 700
 				}
 			},
 			levelEnd = {
