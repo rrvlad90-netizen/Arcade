@@ -1,0 +1,72 @@
+6. Теперь можно настроить лучника
+Пример врага-стрелка:
+
+lua
+movementMode = "keepDistance",
+
+canShoot = true,
+shootRange = 500,
+shootChance = 1,
+shootCooldown = 1.2,
+shootStartDelay = 0,
+
+bulletModel = "ArcArrow",
+bulletSpeed = 240,
+
+preferredDistance = 260,
+tooCloseDistance = 120,
+
+MoveDirection = 0,
+stopInAttackRange = true,
+Поведение:
+
+если цель далеко — подходит;
+если цель в нормальной дистанции — стоит и стреляет;
+если цель подошла слишком близко — отходит назад;
+при этом смотрит на цель.
+7. Для часового
+lua
+movementMode = "hold",
+
+canShoot = true,
+shootRange = 450,
+shootChance = 1,
+shootCooldown = 1.0,
+
+MoveDirection = 0,
+Поведение:
+
+стоит;
+поворачивается к цели;
+стреляет, если цель в радиусе;
+не преследует.
+8. Для обычного гоблина
+Можно вообще ничего не указывать:
+
+lua
+movementMode = "chase"
+или явно:
+
+lua
+movementMode = "chase",
+
+canMeleeAttack = true,
+meleeRange = 35,
+retreatAfterMelee = true,
+Поведение как раньше:
+
+идёт на цель;
+бьёт вблизи;
+может отходить после удара.
+9. Для NPC-компаньона
+Пока можно оставить:
+
+lua
+movementMode = "chase",
+followPlayer = true,
+MoveDirection = 0,
+Или если хочешь, чтобы он не прилипал к врагу:
+
+lua
+movementMode = "chase",
+stopInAttackRange = true,

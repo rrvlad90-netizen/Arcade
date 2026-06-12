@@ -394,6 +394,27 @@ function Enemy:new(config, x, groundTop)
         or config.retreat_command_speed
         or enemy.speed		
 		
+-- Режим движения actor-а.
+    -- chase        — идти на цель напролом.
+    -- hold         — стоять на месте, но атаковать если цель в радиусе.
+    -- keepDistance — держать дистанцию.
+    enemy.movementMode = config.movementMode
+        or config.movement_mode
+        or "chase"
+
+    -- Если true, actor не идёт ближе, когда цель уже в радиусе атаки.
+    enemy.stopInAttackRange = config.stopInAttackRange == true
+        or config.stop_in_attack_range == true
+
+    -- Дистанции для movementMode = "keepDistance".
+    enemy.preferredDistance = config.preferredDistance
+        or config.preferred_distance
+        or 260
+
+    enemy.tooCloseDistance = config.tooCloseDistance
+        or config.too_close_distance
+        or 120
+
 		
 -- Направление движения и атаки.
     -- -1: всегда влево.
@@ -1029,6 +1050,76 @@ function Enemy:isPlayerInMeleeRange(player)
     return self:getEdgeDistanceToPlayer(player) <= self.meleeRange
 end
 
+--функция проверки shootRange
+function Enemy:isTargetInShootRange(target)
+    if not self.canShoot or not target then
+        return false
+    end
+
+    if not self:isPlayerInAttackDirection(target) then
+        return false
+    end
+
+    return self:getDistanceToPlayer(target) <= self.shootRange
+end
+
+--общую проверка attackRange
+function Enemy:isTargetInAttackRange(target)
+    return self:isPlayerInMeleeRange(target)
+        or self:isTargetInShootRange(target)
+end
+
+--функция выбора направления движения возвращает moveDirection и faceDirection Чтобы лучник мог отходить назад, но всё равно смотреть на цель.
+function Enemy:getMovementDirectionByMode(target)
+    -- movementMode = hold:
+    -- actor стоит, но может атаковать.
+    if self.movementMode == "hold" then
+        if target then
+            return 0, self:getAttackDirection(target)
+        end
+
+        return 0, self.facingDirection
+    end
+
+    -- Если цель уже в радиусе атаки и включён stopInAttackRange,
+    -- actor стоит и атакует, а не подходит вплотную.
+    if self.stopInAttackRange
+        and target
+        and self:isTargetInAttackRange(target)
+    then
+        return 0, self:getAttackDirection(target)
+    end
+
+    -- movementMode = keepDistance:
+    -- actor подходит, если далеко;
+    -- отходит, если слишком близко;
+    -- стоит, если дистанция хорошая.
+    if self.movementMode == "keepDistance" and target then
+        local targetDirection = self:getDirectionToPlayer(target)
+        local distance = self:getEdgeDistanceToPlayer(target)
+
+        if distance < self.tooCloseDistance then
+            -- Слишком близко — отходим от цели,
+            -- но смотрим на цель.
+            return -targetDirection, targetDirection
+        end
+
+        if distance > self.preferredDistance then
+            -- Слишком далеко — идём к цели.
+            return targetDirection, targetDirection
+        end
+
+        -- Дистанция нормальная — стоим и смотрим на цель.
+        return 0, targetDirection
+    end
+
+    -- movementMode = chase:
+    -- старое поведение, идём к цели/по направлению MoveDirection.
+    local moveDirection = self:getMoveDirection(target)
+
+    return moveDirection, moveDirection
+end
+
 -- Направление к игроку:
 -- -1 значит игрок слева,
 --  1 значит игрок справа.
@@ -1529,13 +1620,21 @@ function Enemy:update(dt, player, targetGroups)
             return
         end
 
-        -- Обычное движение.
-        local moveDirection = self:getMoveDirection(target)
+		-- Движение по movementMode.
+		local moveDirection, faceDirection = self:getMovementDirectionByMode(target)
 
-        self:setState(self:getMoveState())
+		if faceDirection and faceDirection ~= 0 then
+			self.facingDirection = faceDirection
+		end
 
-        self.facingDirection = moveDirection
-        self.x = self.x + moveDirection * self.speed * dt
+		if moveDirection == 0 then
+			self:setState("idle")
+			self:updateAnimation(dt)
+			return
+		end
+
+		self:setState(self:getMoveState())
+		self.x = self.x + moveDirection * self.speed * dt
 
     -- Отход назад после удара/прыжка/атаки.
     elseif self.state == "retreat" then

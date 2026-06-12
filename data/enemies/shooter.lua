@@ -13,14 +13,22 @@ showHealthBar = false,
 offsetX = 0,
 offsetY = -24,
 
+movementMode = "keepDistance",
+
 canShoot = true,
-shootRange = 600,
+shootRange = 500,
 shootChance = 1,
-shootCooldown = 1.4,
-shootStartDelay = 0.4,
+shootCooldown = 1.2,
+shootStartDelay = 0,
 
 bulletModel = "ArcArrow",
 bulletSpeed = 240,
+
+preferredDistance = 260,
+tooCloseDistance = 120,
+
+MoveDirection = 0,
+stopInAttackRange = true,
 
 alpha = 0.5, -- прозрачность
 

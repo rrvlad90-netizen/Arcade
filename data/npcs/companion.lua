@@ -28,7 +28,10 @@ return {
 	--command = "retreat",
 	--commandRetreatSpeed = 220
 --отдана комманда актору - вперед (обычный режим)	
-	command = "advance",
+--	command = "advance",
+
+	movementMode = "chase",
+	stopInAttackRange = true, --не продолжать идти на цель, а атаковать его пока не пебедишь
 
     canMeleeAttack = true,
     meleeRange = 35,
