@@ -142,3 +142,26 @@ enemySpawners = {
         }
     }
 }
+
+
+------
+
+Почему крашило:
+
+У тебя было так:
+
+lua
+for i = #enemyBullets, 1, -1 do
+    local bullet = enemyBullets[i]
+    ...
+end
+
+for npcIndex = #npcs, 1, -1 do
+    local npc = npcs[npcIndex]
+
+    if bullet:canDamageTarget("npc") then
+bullet существует только внутри первого for. После end он исчезает. Поэтому:
+
+lua
+attempt to index global 'projectile' / 'bullet' nil value
+После замены блок будет правильный: одна пуля проверяется и по игроку, и по NPC внутри одного цикла.

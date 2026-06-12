@@ -126,7 +126,7 @@ local function addProjectileImpactEffect(projectile)
 end
 
 
-------Проверка кого можетдамажить Эффект
+------Проверка кого может дамажить Эффект
 local function resolveEffectDamage(effect)
     if not effect:canApplyDamage() then
         return
@@ -143,18 +143,17 @@ local function resolveEffectDamage(effect)
         player:takeDamage(effect.damage)
     end
 
-    if effect:canDamageTarget("enemy") then
-        for _, enemy in ipairs(enemies) do
-			if projectile:canDamageTarget("enemy")
-				and enemy:isAlive()
-				and rectsOverlap(projectile:getHitbox(), enemy:getHitbox())
+	if effect:canDamageTarget("enemy") then
+		for _, enemy in ipairs(enemies) do
+			if enemy:isAlive()
+				and circleOverlapsRect(damageCircle, enemy:getHitbox())
 			then
-                if enemy:takeDamage(effect.damage) then
-                    score = score + enemy.score
-                end
-            end
-        end
-    end
+				if enemy:takeDamage(effect.damage) then
+					score = score + enemy.score
+				end
+			end
+		end
+	end
 	
 	if effect:canDamageTarget("npc") then
 		for _, npc in ipairs(npcs) do
@@ -607,35 +606,35 @@ level:resolveEnemyHazards(enemies, rectsOverlap)
 level:resolvePlayerHealthPickups(player, rectsOverlap)	
 
 ------Обработка попаданий
----------------столкновение вражеских пуль с игроком
+---------------столкновение вражеских пуль с игроком и npc
 local playerHitboxForBullets = player:getHitbox()
 
 for i = #enemyBullets, 1, -1 do
     local bullet = enemyBullets[i]
+    local bulletRemoved = false
 
-	if bullet:canDamageTarget("player")
-		and player:canTakeDamage()
-		and rectsOverlap(playerHitboxForBullets, bullet:getHitbox())
-	then
-		addProjectileImpactEffect(bullet)
-		player:takeDamage(bullet.damage)
-		table.remove(enemyBullets, i)
-		break
-	end
-end	
-
----------------столкновение вражеских пуль с npc
-for npcIndex = #npcs, 1, -1 do
-    local npc = npcs[npcIndex]
-
-    if bullet:canDamageTarget("npc")
-        and npc:isAlive()
-        and rectsOverlap(bullet:getHitbox(), npc:getHitbox())
+    if bullet:canDamageTarget("player")
+        and player:canTakeDamage()
+        and rectsOverlap(playerHitboxForBullets, bullet:getHitbox())
     then
         addProjectileImpactEffect(bullet)
-        npc:takeDamage(bullet.damage)
+        player:takeDamage(bullet.damage)
         table.remove(enemyBullets, i)
-        break
+        bulletRemoved = true
+    end
+
+    if not bulletRemoved and bullet:canDamageTarget("npc") then
+        for _, npc in ipairs(npcs) do
+            if npc:isAlive()
+                and rectsOverlap(bullet:getHitbox(), npc:getHitbox())
+            then
+                addProjectileImpactEffect(bullet)
+                npc:takeDamage(bullet.damage)
+                table.remove(enemyBullets, i)
+                bulletRemoved = true
+                break
+            end
+        end
     end
 end
 	
