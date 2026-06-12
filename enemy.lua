@@ -988,6 +988,9 @@ function Enemy:tryMeleeAttack(player, dt)
 
     local direction = self:getAttackDirection(player)
 
+    -- ВАЖНО:
+    -- Копируем всю модель projectile целиком.
+    -- Так сохраняются damageTargets, impactEffect, alpha, animation и т.д.
     local projectile = copyTable(self.meleeProjectile)
 
     local projectileW = projectile.w or projectile.width or 40
