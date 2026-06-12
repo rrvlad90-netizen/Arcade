@@ -137,9 +137,10 @@ local function resolveEffectDamage(effect)
 
     if effect.damageEnemies then
         for _, enemy in ipairs(enemies) do
-            if enemy:isAlive()
-                and circleOverlapsRect(damageCircle, enemy:getHitbox())
-            then
+			if projectile:canDamageTarget("enemy")
+				and enemy:isAlive()
+				and rectsOverlap(projectile:getHitbox(), enemy:getHitbox())
+			then
                 if enemy:takeDamage(effect.damage) then
                     score = score + enemy.score
                 end
@@ -551,7 +552,8 @@ local playerHitboxForBullets = player:getHitbox()
 for i = #enemyBullets, 1, -1 do
     local bullet = enemyBullets[i]
 
-	if player:canTakeDamage()
+	if bullet:canDamageTarget("player")
+		and player:canTakeDamage()
 		and rectsOverlap(playerHitboxForBullets, bullet:getHitbox())
 	then
 		addProjectileImpactEffect(bullet)
