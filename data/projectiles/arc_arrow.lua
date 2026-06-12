@@ -4,6 +4,11 @@ return {
 
     damage = 1,
 
+	damageTargets = {
+        player = true,
+        npc = true
+    },
+
     image = "assets/projectiles/arrow.png",
 
     -- Начальная вертикальная скорость.

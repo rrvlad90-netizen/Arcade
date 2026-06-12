@@ -6,6 +6,11 @@ return {
     speed = 260,
     damage = 1,
 
+	damageTargets = {
+        player = true,
+        npc = true
+    },
+
     image = "assets/enemies/flying_shooter/bullet.png",
 
     impactEffect = {

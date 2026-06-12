@@ -603,13 +603,14 @@ level:resolveEnemyHazards(enemies, rectsOverlap)
 level:resolvePlayerHealthPickups(player, rectsOverlap)	
 
 ------Обработка попаданий
----------------столкновение вражеских пуль с игроком и npc
+---------------столкновение projectiles с игроком, npc и врагами
 local playerHitboxForBullets = player:getHitbox()
 
 for i = #enemyBullets, 1, -1 do
     local bullet = enemyBullets[i]
     local bulletRemoved = false
 
+    -- Урон игроку
     if bullet:canDamageTarget("player")
         and player:canTakeDamage()
         and rectsOverlap(playerHitboxForBullets, bullet:getHitbox())
@@ -620,6 +621,7 @@ for i = #enemyBullets, 1, -1 do
         bulletRemoved = true
     end
 
+    -- Урон NPC
     if not bulletRemoved and bullet:canDamageTarget("npc") then
         for _, npc in ipairs(npcs) do
             if npc:isAlive()
@@ -633,10 +635,28 @@ for i = #enemyBullets, 1, -1 do
             end
         end
     end
+
+    -- Урон врагам
+    -- Это нужно для melee/projectile компаньона.
+    if not bulletRemoved and bullet:canDamageTarget("enemy") then
+        for _, enemy in ipairs(enemies) do
+            if enemy:isAlive()
+                and rectsOverlap(bullet:getHitbox(), enemy:getHitbox())
+            then
+                addProjectileImpactEffect(bullet)
+
+                if enemy:takeDamage(bullet.damage) then
+                    score = score + enemy.score
+                end
+
+                table.remove(enemyBullets, i)
+                bulletRemoved = true
+                break
+            end
+        end
+    end
 end
 	
-	
-
 -------------Проверка на обьект конца уровня (если его коснуться то победа)	
 	if level:checkPlayerReachedEnd(player, rectsOverlap) then
         startLevelVictory()

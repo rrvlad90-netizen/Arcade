@@ -3,7 +3,12 @@ return {
     h = 18,
 
     damage = 1,
-
+	
+	damageTargets = {
+        player = true,
+        npc = true
+    },
+	
     alpha = 0.45,
 
     animations = {

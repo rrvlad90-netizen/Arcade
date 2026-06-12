@@ -6,7 +6,12 @@ return {
     vy = 280,
 
     damage = 1,
-
+	
+	damageTargets = {
+        player = true,
+        npc = true
+    },
+	
     image = "assets/enemies/bat_bomber/drop.png",
 
     collideGround = true,

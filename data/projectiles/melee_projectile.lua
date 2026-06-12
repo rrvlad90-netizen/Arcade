@@ -5,6 +5,11 @@ return {
     speed = 0,
     damage = 1,
 
+	damageTargets = {
+        player = true,
+        npc = true
+    },
+
     spawnOffsetX = 38,
     spawnOffsetY = 12,
 
