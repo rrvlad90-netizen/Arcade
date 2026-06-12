@@ -1243,7 +1243,7 @@ function Enemy:tryShoot(player, dt)
     if math.random() > self.shootChance then
         return false
     end
----напрвление выстрела
+---направление выстрела
 	local direction = self:getAttackDirection(player)
 	
 ----проджектайлы
@@ -1262,15 +1262,43 @@ function Enemy:tryShoot(player, dt)
 	local projectileW = projectile.w or self.bulletW
 	local projectileH = projectile.h or self.bulletH
 
+--- рассчет направление и скорость проджектайла
 	self.pendingAttackProjectile = copyTable(projectile)
 
-	self.pendingAttackProjectile.x = self.x + self.w / 2 - projectileW / 2
-	self.pendingAttackProjectile.y = self.y + self.h / 2 - projectileH / 2
-	self.pendingAttackProjectile.w = projectileW
-	self.pendingAttackProjectile.h = projectileH
+    self.pendingAttackProjectile.x = projectile.x
+    self.pendingAttackProjectile.y = projectile.y
+    self.pendingAttackProjectile.w = projectile.w
+    self.pendingAttackProjectile.h = projectile.h
 
-	self.pendingAttackProjectile.vx = projectileVx
-	self.pendingAttackProjectile.vy = projectile.vy or 0
+    local projectileSpeed = projectile.speed
+        or projectile.bulletSpeed
+        or self.bulletSpeed
+        or 220
+
+    if projectile.aimAtTarget == true
+        or projectile.aim_at_target == true
+    then
+        local projectileCenterX = self.pendingAttackProjectile.x + self.pendingAttackProjectile.w / 2
+        local projectileCenterY = self.pendingAttackProjectile.y + self.pendingAttackProjectile.h / 2
+
+        local targetCenterX = player.x + player.w / 2
+        local targetCenterY = player.y + player.h / 2
+
+        local dx = targetCenterX - projectileCenterX
+        local dy = targetCenterY - projectileCenterY
+
+        local length = math.sqrt(dx * dx + dy * dy)
+
+        if length <= 0 then
+            length = 1
+        end
+
+        self.pendingAttackProjectile.vx = dx / length * projectileSpeed
+        self.pendingAttackProjectile.vy = dy / length * projectileSpeed
+    else
+        self.pendingAttackProjectile.vx = projectileSpeed * direction
+        self.pendingAttackProjectile.vy = projectile.vy or 0
+    end
 
 	self.pendingAttackProjectile.damage = projectile.damage or self.bulletDamage
 	self.pendingAttackProjectile.image = projectile.image or self.bulletImage

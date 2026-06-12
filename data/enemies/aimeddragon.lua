@@ -1,0 +1,93 @@
+return {
+
+---для события на frame = 1 нужно fireFirstFrameEvents = true
+---Иначе звук на первом кадре не сработает при входе в анимацию.
+
+    type = "aimeddragon",
+    flying = true,
+
+    w = 70,
+    h = 70,
+    y = 150,
+
+    offsetY = -44,
+
+    speed = 90,
+    health = 2,
+    damage = 1,
+    score = 4,
+
+    canShoot = true,
+    shootRange = 600,
+    shootChance = 1,
+    shootCooldown = 1.4,
+
+	bulletModel = "AimedProjectile",
+	bulletSpeed = 20,
+
+    flipImage = true,
+
+	   animations = {
+	   
+        fly = {
+            loop = true,
+            frameDuration = 0.08,
+            frames = {
+                "assets/enemies/dragon/fly_1.png",
+                "assets/enemies/dragon/fly_2.png"
+            }
+        },
+
+        attack = {
+            loop = false,
+            frameDuration = 0.08,
+            frames = {
+                "assets/enemies/bat_bomber/attack_1.png",
+                "assets/enemies/bat_bomber/attack_2.png"
+            },
+            events = {
+                {
+                    frame = 3,
+                    action = "sound",
+                    sound = "assets/sounds/sfx/drop.wav"
+                },
+                {
+                    frame = 3,
+                    action = "emitPendingProjectile"
+                }
+            }
+        },
+
+        death = {
+            loop = false,
+            holdLastFrame = true,
+            frameDuration = 0.1,
+
+            -- Важно: событие на 1 кадре должно сработать сразу при старте death.
+            fireFirstFrameEvents = true,
+
+            frames = {
+                "assets/enemies/bat_bomber/death_1.png",
+                "assets/enemies/bat_bomber/death_2.png",
+                "assets/enemies/bat_bomber/death_3.png"
+            },
+            events = {
+                {
+                    frame = 1,
+                    action = "sound",
+                    sound = "assets/sounds/sfx/hit2.wav"
+                },
+				{
+					frame = 2,
+					action = "spawnEffect",
+					model = "BatCorpse",
+					offsetX = 0,
+					offsetY = -44,
+					--vx = 80, --летит вправо, можно не писать так как уже указанов эффекте для BatCorpse.
+					gravity = 900		
+				}
+			}
+        }
+			
+    }
+}
