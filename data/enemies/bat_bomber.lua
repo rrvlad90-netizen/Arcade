@@ -29,16 +29,16 @@ return {
 
 	   animations = {
 	   
-		  idle = {
-			loop = true,
-			frameDuration = 0.12,
-			frames = {
-                "assets/enemies/bat_bomber/fly_1.png",
-                "assets/enemies/bat_bomber/fly_2.png",
-                "assets/enemies/bat_bomber/fly_3.png",
-                "assets/enemies/bat_bomber/fly_4.png"
-			}
-		}, 
+--		  idle = {
+--			loop = true,
+--			frameDuration = 0.12,
+--			frames = {
+ --               "assets/enemies/bat_bomber/fly_1.png",
+ --               "assets/enemies/bat_bomber/fly_2.png",
+ --               "assets/enemies/bat_bomber/fly_3.png",
+ --               "assets/enemies/bat_bomber/fly_4.png"
+--			}
+--		}, 
         fly = {
             loop = true,
             frameDuration = 0.08,

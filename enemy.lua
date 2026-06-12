@@ -1394,8 +1394,8 @@ function Enemy:update(dt, player, targetGroups)
 
     self.lastPlayer = player
     self.currentTarget = target
-	---время действия комманды (для нпс)
-	self:updateCommandTimer(dt)
+
+    self:updateCommandTimer(dt)
 
     self.previousX = self.x
     self.previousY = self.y
@@ -1404,20 +1404,13 @@ function Enemy:update(dt, player, targetGroups)
         self:updateAnimation(dt)
         return
     end
--- Приказ retreat полностью отключает атаки.
+
+    -- Приказ retreat полностью отключает атаки.
     -- Актор просто убегает.
     if self:isCommandRetreat() then
         self:updateRetreatCommand(dt, target)
         return
-    end	
-	
----CЛЕДОВАНИЕ ЗА ИГРОКОМ	
--- если есть цель — атакуем/идём к цели
--- если цели нет, но это npc-follow — идём к игроку
-	if not target and self:tryFollowPlayer(dt, player) then
-            self:updateAnimation(dt)
-            return
-        end
+    end
 
     -- Лёгкое покачивание flying-врагов.
     if self.flying then
@@ -1428,42 +1421,41 @@ function Enemy:update(dt, player, targetGroups)
         end
     end
 
-    -- attack теперь завершается концом attack-анимации,
-    -- а не отдельным attackTimer.
-	if self.state == "attack" then
-			self:updateAnimation(dt)
+    -- attack завершается концом attack-анимации.
+    if self.state == "attack" then
+        self:updateAnimation(dt)
 
-			if self.animationSet:isCurrentFinished() then
-				self.pendingAttackProjectile = nil
+        if self.animationSet:isCurrentFinished() then
+            self.pendingAttackProjectile = nil
 
-				if self.retreatAfterMelee then
-					self.retreatMoved = 0
-					self.retreatDistance = self.meleeRetreatDistance
-					self.retreatThenTaunt = false
-					self:setState("retreat")
-				else
-					self:setState(self:getMoveState())
-				end
-			end
+            if self.retreatAfterMelee then
+                self.retreatMoved = 0
+                self.retreatDistance = self.meleeRetreatDistance
+                self.retreatThenTaunt = false
+                self:setState("retreat")
+            else
+                self:setState(self:getMoveState())
+            end
+        end
 
-			return
-		end
-		
---------поворот		
-		if self.state == "turn" then
-				self:updateAnimation(dt)
+        return
+    end
 
-				if self.animationSet:isCurrentFinished() then
-					if self.pendingFacingDirection then
-						self.facingDirection = self.pendingFacingDirection
-						self.pendingFacingDirection = nil
-					end
+    -- turn — разворот к цели.
+    if self.state == "turn" then
+        self:updateAnimation(dt)
 
-					self:setState(self:getMoveState())
-				end
+        if self.animationSet:isCurrentFinished() then
+            if self.pendingFacingDirection then
+                self.facingDirection = self.pendingFacingDirection
+                self.pendingFacingDirection = nil
+            end
 
-				return
-			end		
+            self:setState(self:getMoveState())
+        end
+
+        return
+    end
 
     -- Физика jumper-врага.
     if self.state == "jump" then
@@ -1486,16 +1478,8 @@ function Enemy:update(dt, player, targetGroups)
         return
     end
 
--- Приказ hold: не двигаемся, но атаки выше всё ещё работают.
-	if self:isCommandHold() then
-		self:setState("idle")
-		self:updateAnimation(dt)
-		return
-	end
-
---если нужно разворачиваемся
--- Основное движение walk/fly.
-if self:isReadyForAction() then --если в состоянни, готов к движению
+    -- Основное состояние: walk/fly/idle.
+    if self:isReadyForAction() then
         -- Если MoveDirection = 0 и цель с другой стороны,
         -- сначала проигрываем turn-анимацию.
         if self:tryTurnToPlayer(target) then
@@ -1530,29 +1514,58 @@ if self:isReadyForAction() then --если в состоянни, готов к 
             return
         end
 
-        -- ВАЖНО:
-        -- hold стоит только здесь, после всех атак.
-        -- Он запрещает движение, но не запрещает атаковать.
+        -- HOLD стоит только здесь.
+        -- То есть актор уже попробовал атаковать,
+        -- но если атаки не было — он не двигается.
         if self:isCommandHold() then
+            self:setState("idle")
             self:updateAnimation(dt)
             return
         end
 
+        -- Если цели нет, NPC может следовать за игроком.
         if not target and self:tryFollowPlayer(dt, player) then
             self:updateAnimation(dt)
             return
         end
 
---Перед обычным движением возвращаем walk/fly
-		if self:isReadyForAction() then
-			local moveDirection = self:getMoveDirection(target)
+        -- Обычное движение.
+        local moveDirection = self:getMoveDirection(target)
 
-			self:setState(self:getMoveState())
+        self:setState(self:getMoveState())
 
-			self.facingDirection = moveDirection
-			self.x = self.x + moveDirection * self.speed * dt
-		end
-	end	
+        self.facingDirection = moveDirection
+        self.x = self.x + moveDirection * self.speed * dt
+
+    -- Отход назад после удара/прыжка/атаки.
+    elseif self.state == "retreat" then
+        local move = self.retreatSpeed * dt
+
+        self.x = self.x - self.facingDirection * move
+        self.retreatMoved = self.retreatMoved + move
+
+        if self.retreatMoved >= self.retreatDistance then
+            self.retreatDistance = self.defaultRetreatDistance or self.retreatDistance
+
+            if self.retreatThenTaunt then
+                self.tauntTimer = self.tauntDuration
+                self:setState("taunt")
+                playRandomSound(self.sounds.taunt)
+            else
+                self:setState(self:getMoveState())
+            end
+        end
+
+    -- Taunt после retreat.
+    elseif self.state == "taunt" then
+        self.tauntTimer = self.tauntTimer - dt
+
+        if self.tauntTimer <= 0 then
+            self:setState(self:getMoveState())
+        end
+    end
+
+    self:updateAnimation(dt)
 end
 
 -- Обновляет текущую анимацию и обрабатывает её events.

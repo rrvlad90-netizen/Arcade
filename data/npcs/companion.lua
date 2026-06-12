@@ -28,7 +28,7 @@ return {
 	--command = "retreat",
 	--commandRetreatSpeed = 220
 --отдана комманда актору - вперед (обычный режим)	
-	--command = "advance"
+	command = "advance",
 
     canMeleeAttack = true,
     meleeRange = 35,

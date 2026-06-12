@@ -33,7 +33,7 @@ MoveDirection = 0,
 	--command = "retreat",
 	--commandRetreatSpeed = 220
 --отдана комманда актору - вперед (обычный режим)	
-	--command = "advance"
+	command = "advance",
 
 --flipImage = true, --если неправильно нарисовал спрайт то его развернем
 speed = 170,
