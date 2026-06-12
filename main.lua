@@ -148,7 +148,7 @@ local function resolveEffectDamage(effect)
 			if enemy:isAlive()
 				and circleOverlapsRect(damageCircle, enemy:getHitbox())
 			then
-				if enemy:takeDamage(effect.damage) then
+				if enemy:takeDamage(effect.damage, effect.deathType) then
 					score = score + enemy.score
 				end
 			end
@@ -160,7 +160,7 @@ local function resolveEffectDamage(effect)
 			if npc:isAlive()
 				and circleOverlapsRect(damageCircle, npc:getHitbox())
 			then
-				npc:takeDamage(effect.damage)
+				npc:takeDamage(effect.damage, effect.deathType)
 			end
 		end
 	end	
@@ -563,7 +563,7 @@ for projectileIndex = #playerProjectiles, 1, -1 do
             then
                 addProjectileImpactEffect(projectile)
 
-                if enemy:takeDamage(projectile.damage or 1) then
+                if enemy:takeDamage(projectile.damage or 1, projectile.deathType) then
                     score = score + enemy.score
                 end
 
@@ -580,7 +580,7 @@ for projectileIndex = #playerProjectiles, 1, -1 do
                 and rectsOverlap(projectile:getHitbox(), npc:getHitbox())
             then
                 addProjectileImpactEffect(projectile)
-                npc:takeDamage(projectile.damage or 1)
+                npc:takeDamage(projectile.damage or 1, projectile.deathType)
 
                 table.remove(playerProjectiles, projectileIndex)
                 projectileRemoved = true

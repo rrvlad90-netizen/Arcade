@@ -2,7 +2,7 @@ return {
     w = 44,
     h = 36,
 
-    damage = 1,
+    damage = 2,
 
     damageTargets = {
         enemy = true
@@ -10,6 +10,8 @@ return {
 
     vx = 0,
     vy = 0,
+
+    deathType = "heavy",   ---бьет так что все разлетается!!!!
 
     alpha = 0.50,
 

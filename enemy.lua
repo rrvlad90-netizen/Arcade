@@ -331,6 +331,11 @@ function Enemy:new(config, x, groundTop)
     enemy.x = x
     enemy.w = config.w or 38
     enemy.h = config.h or 48
+	
+-- Effect, который создаётся при тяжёлой смерти.
+-- Сам actor не летит, летит отдельный effect-труп.
+	enemy.heavyDeathEffect = config.heavyDeathEffect
+		or config.heavy_death_effect	
 		
 -- Тип существа:
     -- enemy  — враг
@@ -980,7 +985,7 @@ end
 
 -- Получение урона.
 -- Возвращает true, если именно этот удар убил врага.
-function Enemy:takeDamage(amount)
+function Enemy:takeDamage(amount, deathType)
     if self.dead then
         return false
     end
@@ -990,23 +995,63 @@ function Enemy:takeDamage(amount)
     self.health = math.max(0, self.health - amount)
 
     if self.health <= 0 then
-        return self:die()
+        return self:die(deathType)
     end
 
     return false
 end
 
--- Запуск death-состояния.
-function Enemy:die()
+--Рheavy death  - в нем вылетает эффект из актора (его труп)
+function Enemy:spawnHeavyDeathEffect(deathType)
+    if deathType ~= "heavy" then
+        return false
+    end
+
+    if not self.heavyDeathEffect then
+        return false
+    end
+
+    local effectConfig = copyTable(self.heavyDeathEffect)
+
+    local offsetX = effectConfig.offsetX
+        or effectConfig.offset_x
+        or 0
+
+    local offsetY = effectConfig.offsetY
+        or effectConfig.offset_y
+        or 0
+
+    effectConfig.x = self.x + offsetX
+    effectConfig.y = self.y + offsetY
+
+    -- Если actor смотрел влево, труп летит вправо.
+    -- Если actor смотрел вправо, труп летит влево.
+    effectConfig.directionMultiplier = -(self.facingDirection or -1)
+
+    table.insert(self.effectSpawnRequests, effectConfig)
+
+    return true
+end
+
+
+-- Запуск death-состояния. 
+--если тип смерти heavy — actor сразу исчезает, а вместо него летит Effect.
+function Enemy:die(deathType)
     if self.dead then
         return false
     end
 
     self.dead = true
     self.deathFinished = false
-    self.pendingAttackProjectile = nil
-    self:setState("death")
+
     playRandomSound(self.sounds.death)
+
+    if self:spawnHeavyDeathEffect(deathType) then
+        self.deathFinished = true
+        return true
+    end
+
+    self:setState("death")
 
     return true
 end

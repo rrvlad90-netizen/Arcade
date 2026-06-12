@@ -108,6 +108,12 @@ function Projectile:new(config)
     projectile.rotation = config.rotation or 0
 
     projectile.damage = config.damage or 1
+	
+-- Тип смерти, который projectile передаст actor-у.
+-- Например: "heavy" — тяжёлая смерть с вылетом трупа.
+	projectile.deathType = config.deathType
+    or config.death_type	
+	
     projectile.damageTargets = buildDamageTargets(config)
 
     projectile.impactEffect = config.impactEffect

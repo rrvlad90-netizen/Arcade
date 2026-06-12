@@ -72,6 +72,13 @@ color = {0.8, 0.35, 0.2},
             }
         },
 
+
+		heavyDeathEffect = {
+			model = "GoblinHeavyCorpse",
+			offsetX = 0,
+			offsetY = -24
+		},
+		
         death = {
             loop = false,
             holdLastFrame = true,

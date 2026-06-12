@@ -83,6 +83,11 @@ function Effect:new(config)
         or config.effect_damage
         or 0
 
+-- Тип смерти, который damage-effect передаст actor-у.
+-- Например: "heavy".
+	effect.deathType = config.deathType
+		or config.death_type
+
     -- Радиус урона от центра эффекта.
     -- Если не указан, берём половину большего размера эффекта.
     effect.damageRadius = config.damageRadius
@@ -137,6 +142,15 @@ function Effect:new(config)
         or config.speedX
         or config.speed_x
         or 0
+
+-- Множитель направления.
+-- Нужен для heavy death: effect летит в противоположную сторону от actor-а.
+	effect.directionMultiplier = config.directionMultiplier
+		or config.direction_multiplier
+
+	if effect.directionMultiplier then
+		effect.vx = math.abs(effect.vx) * effect.directionMultiplier
+	end
 
     -- Вертикальная скорость.
     effect.vy = config.vy
