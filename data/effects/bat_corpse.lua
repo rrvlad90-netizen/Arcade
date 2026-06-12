@@ -25,8 +25,8 @@ return {
         model = "ExplosionDamage"  ---взрыв который бьет по радиусу
     },
 
-    impactOffsetX = 10,
-    impactOffsetY = 20,
+	impactOffsetX = 3,
+	impactOffsetY = -10,
 
     color = {0.45, 0.45, 0.45}
 }

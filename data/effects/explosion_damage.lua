@@ -10,11 +10,15 @@ return {
 
     -- По умолчанию true, можно не писать.
     damagePlayer = true,
-
     -- Если нужно, чтобы взрыв дамажил врагов.
     damageEnemies = false,
 
     gravity = 0,
+
+    collideGround = false,
+    collidePlatforms = false,
+    removeOnImpact = false,
+
     removeWhenAnimationFinished = true,
 
     animations = {
@@ -32,13 +36,3 @@ return {
 
     color = {1.0, 0.45, 0.1}
 }
-
-
---Если хочешь эффект, который дамажит только врагов, например магический взрыв игрока:
---damage = 1,
---damageRadius = 80,
---damagePlayer = false,
---damageEnemies = true,
-
---Если хочешь просто визуальный эффект без урона:
---damage = 0 или вообще не указывать damage.
