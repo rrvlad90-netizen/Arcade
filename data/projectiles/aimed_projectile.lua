@@ -20,6 +20,12 @@ return {
         player = true,
         npc = true
     },
+	
+	image = "assets/projectiles/arrow.png",
+
+    -- Если упадёт в землю/возвышенность — исчезнет с эффектом.
+    collideGround = true,
+    collidePlatforms = true,
 
     impactEffect = {
         model = "Explosion"

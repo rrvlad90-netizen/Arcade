@@ -6,5 +6,6 @@ return {
 	Jumper = require("data.enemies.jumper"),	
 	Shooter = require("data.enemies.shooter"),
 	Slime = require("data.enemies.slime"),
-	Dragon = require("data.enemies.dragon")
+	Dragon = require("data.enemies.dragon"),
+	AimedDragon = require("data.enemies.aimeddragon")
 }

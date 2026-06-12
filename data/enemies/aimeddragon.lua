@@ -33,8 +33,8 @@ return {
             loop = true,
             frameDuration = 0.08,
             frames = {
-                "assets/enemies/dragon/fly_1.png",
-                "assets/enemies/dragon/fly_2.png"
+                "assets/enemies/dragon/attack_1.png",
+                "assets/enemies/dragon/attack_2.png"
             }
         },
 
@@ -42,17 +42,17 @@ return {
             loop = false,
             frameDuration = 0.08,
             frames = {
-                "assets/enemies/bat_bomber/attack_1.png",
-                "assets/enemies/bat_bomber/attack_2.png"
+                "assets/enemies/dragon/attack_1.png",
+                "assets/enemies/dragon/attack_2.png"
             },
             events = {
                 {
-                    frame = 3,
+                    frame = 2,
                     action = "sound",
                     sound = "assets/sounds/sfx/drop.wav"
                 },
                 {
-                    frame = 3,
+                    frame = 2,
                     action = "emitPendingProjectile"
                 }
             }
@@ -67,9 +67,8 @@ return {
             fireFirstFrameEvents = true,
 
             frames = {
-                "assets/enemies/bat_bomber/death_1.png",
-                "assets/enemies/bat_bomber/death_2.png",
-                "assets/enemies/bat_bomber/death_3.png"
+                "assets/enemies/dragon/attack_1.png",
+                "assets/enemies/dragon/attack_2.png"
             },
             events = {
                 {
@@ -80,11 +79,10 @@ return {
 				{
 					frame = 2,
 					action = "spawnEffect",
-					model = "BatCorpse",
+					model = "Explosion",
 					offsetX = 0,
 					offsetY = -44,
-					--vx = 80, --летит вправо, можно не писать так как уже указанов эффекте для BatCorpse.
-					gravity = 900		
+					gravity = 0		
 				}
 			}
         }

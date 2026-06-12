@@ -37,7 +37,7 @@ return {
 					spawnDistance = 700
 				},
 				{
-					model = "Dragon",
+					model = "AimedDragon",
 					x = 800,
 					y = 150,
 					spawnDistance = 700
