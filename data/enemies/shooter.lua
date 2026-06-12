@@ -22,6 +22,8 @@ shootStartDelay = 0.4,
 bulletModel = "ArcArrow",
 bulletSpeed = 240,
 
+alpha = 0.5, -- прозрачность
+
 MoveDirection = 0,
 --flipImage = true, --если неправильно нарисовал спрайт то его развернем
 speed = 170,

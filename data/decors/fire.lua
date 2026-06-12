@@ -9,7 +9,8 @@ return {
 
     speed = 120,
 
-    alpha = 1,
+    alpha = 1, --прозрачность 1 -значит не прозрачный
+
 
     sound = "assets/sounds/sfx/fire.wav",
     soundLoop = true,

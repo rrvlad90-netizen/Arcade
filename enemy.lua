@@ -393,6 +393,17 @@ function Enemy:new(config, x, groundTop)
     enemy.score = config.score or 1
     enemy.color = config.color or {0.75, 0.16, 0.18}
 
+
+-- Прозрачность врага.
+    -- 1 — полностью видимый.
+    -- 0.5 — полупрозрачный.
+    -- 0 — невидимый.
+    enemy.alpha = config.alpha
+
+    if enemy.alpha == nil then
+        enemy.alpha = 1
+    end
+
     -- HP врага.
     enemy.maxHealth = config.health
         or config.hp
@@ -1410,12 +1421,21 @@ function Enemy:draw()
 				drawY,
 				0,
 				-1,
-				1
+				1,
+				0,
+				0,
+				self.alpha
 			)
 		else
 			self.animationSet:draw(
 				drawX,
-				drawY
+				drawY,
+				0,
+				1,
+				1,
+				0,
+				0,
+				self.alpha
 			)
 		end
 	end
