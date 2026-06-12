@@ -103,9 +103,13 @@ end
 -- config.doublejump = true — игрок может один раз прыгнуть в воздухе
 function Player:new(x, y, config)
     config = config or {}
+	
+---Порядок важен (сначала получим сущность)	
+    local player = setmetatable({}, Player)
+---а потом передадим ее (если сделать наоборот будет ошибка)
 	player.entityType = "player"
 	
-    local player = setmetatable({}, Player)
+
 
     -- Позиция и размеры игрока
     player.x = x
