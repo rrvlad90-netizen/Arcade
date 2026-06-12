@@ -51,6 +51,18 @@ local function rectsOverlap(a, b)
         and a.y < b.y + b.h
         and b.y < a.y + a.h
 end
+
+-----дамаг эффекта (если есть) по радиусу
+local function circleOverlapsRect(circle, rect)
+    local closestX = math.max(rect.x, math.min(circle.x, rect.x + rect.w))
+    local closestY = math.max(rect.y, math.min(circle.y, rect.y + rect.h))
+
+    local dx = circle.x - closestX
+    local dy = circle.y - closestY
+
+    return dx * dx + dy * dy <= circle.r * circle.r
+end
+
 ------эффекта
 local function createEffect(effectConfig)
     if type(effectConfig) == "string" then
@@ -102,6 +114,40 @@ local function addProjectileImpactEffect(projectile)
     effectConfig.y = projectile.y + projectile.h / 2 + projectile.impactOffsetY
 
     addEffect(effectConfig)
+end
+
+
+
+----дамаг эффекта если есть
+local function resolveEffectDamage(effect)
+    if not effect:canApplyDamage() then
+        return
+    end
+
+    local damageCircle = effect:getDamageCircle()
+
+    if effect.damagePlayer
+        and player
+        and not player.dead
+        and player:canTakeDamage()
+        and circleOverlapsRect(damageCircle, player:getHitbox())
+    then
+        player:takeDamage(effect.damage)
+    end
+
+    if effect.damageEnemies then
+        for _, enemy in ipairs(enemies) do
+            if enemy:isAlive()
+                and circleOverlapsRect(damageCircle, enemy:getHitbox())
+            then
+                if enemy:takeDamage(effect.damage) then
+                    score = score + enemy.score
+                end
+            end
+        end
+    end
+
+    effect:markDamageApplied()
 end
 
 
@@ -366,10 +412,12 @@ function love.update(dt)
 		)
 	end
 
------эффекты - дым, взрыв, искры, части тела врагов и т.д.
+-------цикл обновления эффекта - дым, взрыв, искры, части тела врагов и т.д.
 	for i = #effects, 1, -1 do
 		local effect = effects[i]
+
 		effect:update(dt, level, rectsOverlap)
+		resolveEffectDamage(effect)
 
 		for _, effectRequest in ipairs(effect:consumeEffectSpawnRequests()) do
 			addEffect(effectRequest)

@@ -22,7 +22,7 @@ return {
     removeOnImpact = true,
 
     impactEffect = {
-        model = "Explosion"
+        model = "ExplosionDamage"  ---взрыв который бьет по радиусу
     },
 
     impactOffsetX = 10,

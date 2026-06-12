@@ -74,6 +74,39 @@ function Effect:new(config)
     effect.y = config.y or 0
     effect.w = config.w or config.width or 32
     effect.h = config.h or config.height or 32
+	
+	
+-- Опциональный урон эффекта.
+    -- Если damage = 0 или nil, эффект никого не дамажит.
+    effect.damage = config.damage
+        or config.effectDamage
+        or config.effect_damage
+        or 0
+
+    -- Радиус урона от центра эффекта.
+    -- Если не указан, берём половину большего размера эффекта.
+    effect.damageRadius = config.damageRadius
+        or config.damage_radius
+        or math.max(effect.w, effect.h) / 2
+
+    -- Кого дамажит эффект.
+    -- По умолчанию эффект дамажит игрока, но не врагов.
+    effect.damagePlayer = config.damagePlayer
+
+    if effect.damagePlayer == nil then
+        effect.damagePlayer = config.damage_player
+    end
+
+    if effect.damagePlayer == nil then
+        effect.damagePlayer = true
+    end
+
+    effect.damageEnemies = config.damageEnemies == true
+        or config.damage_enemies == true
+
+    -- Чтобы эффект не наносил урон каждый кадр.
+    effect.damageApplied = false	
+	
 
     -- Горизонтальное смещение.
     -- Положительное значение летит вправо, отрицательное — влево.
@@ -176,6 +209,29 @@ function Effect:getHitbox()
         h = self.h
     }
 end
+
+
+---радиус урона
+function Effect:getDamageCircle()
+    return {
+        x = self.x + self.w / 2,
+        y = self.y + self.h / 2,
+        r = self.damageRadius
+    }
+end
+
+function Effect:canApplyDamage()
+    return not self.damageApplied
+        and self.damage
+        and self.damage > 0
+        and self.damageRadius
+        and self.damageRadius > 0
+end
+
+function Effect:markDamageApplied()
+    self.damageApplied = true
+end
+
 
 function Effect:createImpactEffect()
     if not self.impactEffect then
