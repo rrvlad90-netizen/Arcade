@@ -6,7 +6,7 @@ return {
     w = 40,
     h = 52,
 
-    health = 3,
+    health = 10,
     damage = 1,
 
     speed = 130,
@@ -60,6 +60,11 @@ return {
                 "assets/npcs/companion/attack_2.png"
             },
             events = {
+			    {
+                    frame = 2,
+                    action = "sound",
+                    sound = "assets/sounds/sfx/hittt.wav"
+                },
                 {
                     frame = 2,
                     action = "emitPendingProjectile"
