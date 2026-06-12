@@ -38,20 +38,20 @@ return {
 				},
 				{
 					model = "Dragon",
-					x = 900,
+					x = 800,
 					y = 150,
 					spawnDistance = 700
 				}
 			},
-			npcs = {
-				{
-					model = "Companion",
-					x = 10
-				}
-			},
+--			npcs = {
+--				{
+--					model = "Companion",
+--					x = 10
+--				}
+--			},
 			levelEnd = {
 			model = "DefaultExit",
-			x = 1900,
+			x = 2900,
 			y = 360,
 			speed = 120,
 

@@ -43,12 +43,12 @@ return {
             },
             events = {
                 {
-                    frame = 3,
+                    frame = 2,
                     action = "sound",
                     sound = "assets/sounds/sfx/drop.wav"
                 },
                 {
-                    frame = 3,
+                    frame = 2,
                     action = "emitPendingProjectile"
                 }
             }
