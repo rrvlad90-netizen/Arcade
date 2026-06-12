@@ -603,7 +603,7 @@ level:resolveEnemyHazards(enemies, rectsOverlap)
 level:resolvePlayerHealthPickups(player, rectsOverlap)	
 
 ------Обработка попаданий
----------------столкновение projectiles с игроком, npc и врагами
+---------------столкновение enemyBullets/projectiles с player, npc и enemy
 local playerHitboxForBullets = player:getHitbox()
 
 for i = #enemyBullets, 1, -1 do
@@ -637,7 +637,7 @@ for i = #enemyBullets, 1, -1 do
     end
 
     -- Урон врагам
-    -- Это нужно для melee/projectile компаньона.
+    -- Это нужно для CompanionMeleeProjectile.
     if not bulletRemoved and bullet:canDamageTarget("enemy") then
         for _, enemy in ipairs(enemies) do
             if enemy:isAlive()
@@ -645,7 +645,7 @@ for i = #enemyBullets, 1, -1 do
             then
                 addProjectileImpactEffect(bullet)
 
-                if enemy:takeDamage(bullet.damage) then
+                if enemy:takeDamage(bullet.damage or 1) then
                     score = score + enemy.score
                 end
 
