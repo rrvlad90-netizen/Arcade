@@ -536,10 +536,20 @@ level:resolveEnemyPlatforms(enemies, rectsOverlap)
 
 		npc:update(dt, player, getTargetGroups())
 
+		local shotRequest = npc:consumeShotRequest()
+
+		if shotRequest then
+			table.insert(enemyBullets, EnemyBullet:new(shotRequest))
+		end
+
+		for _, effectRequest in ipairs(npc:consumeEffectSpawnRequests()) do
+			addEffect(effectRequest)
+		end
+
 		if npc:isRemovable() then
 			table.remove(npcs, i)
 		end
-	end	
+	end
 
 ---------------столкновение projectiles игрока с врагами и npc
 for projectileIndex = #playerProjectiles, 1, -1 do
