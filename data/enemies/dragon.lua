@@ -14,7 +14,7 @@ return {
     score = 4,
 
 	canShoot = true,
-	shootRange = 500,
+	shootRange = 350,
 	shootChance = 1,
 	shootCooldown = 1.2,
 	------для теста

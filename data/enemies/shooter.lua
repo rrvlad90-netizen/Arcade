@@ -16,7 +16,7 @@ offsetY = -24,
 movementMode = "keepDistance",
 
 canShoot = true,
-shootRange = 500,
+shootRange = 200,  --200!!!
 shootChance = 1,
 shootCooldown = 1.2,
 shootStartDelay = 0,
@@ -24,8 +24,8 @@ shootStartDelay = 0,
 bulletModel = "ArcArrow",
 bulletSpeed = 240,
 
-preferredDistance = 260,
-tooCloseDistance = 120,
+preferredDistance = 100,  ----100!!!
+tooCloseDistance = 50,  ---50!!!!
 
 MoveDirection = 0,
 stopInAttackRange = true,
