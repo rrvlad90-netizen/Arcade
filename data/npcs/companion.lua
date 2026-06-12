@@ -21,6 +21,8 @@ return {
     hates = {
         enemy = true
     },
+	
+	ignoreFlying = true,
 ---можно без них, это логика для режима сражений	
 --отдана комманда актору - стоять
 --	command = "hold",

@@ -359,10 +359,16 @@ function Enemy:new(config, x, groundTop)
 				or config.hostile_to
 				or config.attackTargets
 				or config.attack_targets,
-			defaultHates
+			defaultHates			
 		)		
-		
-		
+			
+-- Если true, actor не выбирает летающие цели.
+-- Удобно для наземных melee-врагов или которые не должны бить летунов.
+enemy.ignoreFlyingTargets = config.ignoreFlyingTargets == true
+    or config.ignore_flying_targets == true
+    or config.ignoreFlying == true
+    or config.ignore_flying == true	
+	
 -- NPC может следовать за игроком, если сейчас нет боевой цели.
     enemy.followPlayer = config.followPlayer == true
         or config.follow_player == true

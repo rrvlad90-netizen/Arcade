@@ -63,6 +63,12 @@ function Targeting.canAttack(actor, target)
         return false
     end
 
+    if actor.ignoreFlyingTargets == true
+        and target.flying == true
+    then
+        return false
+    end
+
     local targetType = Targeting.getEntityType(target)
 
     return actor.hates

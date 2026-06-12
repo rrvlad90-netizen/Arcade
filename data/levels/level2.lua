@@ -43,12 +43,12 @@ return {
 					spawnDistance = 700
 				}
 			},
---			npcs = {
---				{
---					model = "Companion",
---					x = 10
---				}
---			},
+			npcs = {
+				{
+					model = "Companion",
+					x = 10
+				}
+			},
 			levelEnd = {
 			model = "DefaultExit",
 			x = 2900,
