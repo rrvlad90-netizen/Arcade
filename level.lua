@@ -220,6 +220,12 @@ function Level:start()
 	end	
 
 	self.enemySpawnRequests = {}	
+---сбрасываем анимацию декора	
+	for _, decor in ipairs(self.decors or {}) do
+			if decor.start then
+				decor:start()
+			end
+	end	
 	
 end
 
@@ -228,6 +234,12 @@ end
 function Level:stop()
     if self.music then
         self.music:stop()
+    end
+
+    for _, decor in ipairs(self.decors or {}) do
+        if decor.stop then
+            decor:stop()
+        end
     end
 end
 -- Обновление уровня каждый кадр.
@@ -281,10 +293,14 @@ function Level:update(dt, player)
 	for i = #self.decors, 1, -1 do
 		local decor = self.decors[i]
 		decor:update(dt)
-
-		if decor:isRemovable() then
-			table.remove(self.decors, i)
+--чтобы зацикленный звук не продолжал играть после удаления декора.
+	if decor:isRemovable() then
+		if decor.destroy then
+			decor:destroy()
 		end
+
+    table.remove(self.decors, i)
+end
 	end			
 -- Обновляем объект конца уровня.
     -- Он может появиться по таймеру и двигаться к игроку.

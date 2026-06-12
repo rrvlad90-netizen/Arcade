@@ -195,6 +195,12 @@ return {
 					x = 520,
 					y = 420,
 					speed = 120
+				},
+				{
+					model = "Fire",
+					x = 820,
+					y = 360,
+					speed = 120
 				}
 		}		
 }
