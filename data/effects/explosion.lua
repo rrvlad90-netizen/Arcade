@@ -1,4 +1,4 @@
-return {
+﻿return {
     w = 64,
     h = 64,
 	
@@ -18,7 +18,7 @@ return {
     animations = {
         idle = {
             loop = false,
-            frameDuration = 0.65,
+            frameDuration = 0.15,
             frames = {
                 "assets/effects/explosion_1.png",
                 "assets/effects/explosion_2.png",

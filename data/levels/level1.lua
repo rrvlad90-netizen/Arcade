@@ -69,7 +69,7 @@ return {
 						{
 							model = "FlyingShooter",
 							spawnChance = 8,
-							y = 120,
+							y = 180,
 							speed = 100
 						},
 						{

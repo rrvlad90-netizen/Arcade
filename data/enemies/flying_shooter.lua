@@ -22,7 +22,7 @@ return {
     -- Projectile по€витс€ на attack_3.png
     attackEventFrame = 3,
 
-    bulletModel = "FlyingShooterBullet",
+    bulletModel = "EnemyFireball",
 
     -- ≈сли flyAmplitude = 0, летит ровно без покачивани€.
     flyAmplitude = 10,

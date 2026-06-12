@@ -1,8 +1,48 @@
+local AnimationSet = require("animation_set")
+
 local EnemyBullet = {}
 EnemyBullet.__index = EnemyBullet
 
 local function fileExists(path)
     return path and love.filesystem.getInfo(path) ~= nil
+end
+
+-----для анимаций
+local function createAnimationConfig(config)
+    if config.animations then
+        return {
+            w = config.w,
+            h = config.h,
+            color = config.color,
+            defaultState = config.defaultState or "idle",
+            animations = config.animations
+        }
+    end
+
+    local frames = config.frames
+
+    if not frames and config.image then
+        frames = {
+            {
+                image = config.image
+            }
+        }
+    end
+
+    return {
+        w = config.w,
+        h = config.h,
+        color = config.color,
+        defaultState = "idle",
+        animations = {
+            idle = {
+                loop = config.loop == true,
+                holdLastFrame = config.holdLastFrame == true,
+                frameDuration = config.frameDuration or 0.08,
+                frames = frames or {}
+            }
+        }
+    }
 end
 
 function EnemyBullet:new(config)
@@ -63,6 +103,29 @@ function EnemyBullet:new(config)
 
     bullet.color = config.color or {1.0, 0.25, 0.2}
 
+
+
+	--Если есть animations/frames — projectile будет анимированным.
+		bullet.animationSet = nil
+
+		if config.animations or config.frames then
+			bullet.animationSet = AnimationSet:new(createAnimationConfig({
+				w = bullet.w,
+				h = bullet.h,
+				color = bullet.color,
+
+				image = config.image,
+				frames = config.frames,
+				animations = config.animations,
+
+				loop = config.loop,
+				holdLastFrame = config.holdLastFrame,
+				frameDuration = config.frameDuration,
+				defaultState = config.defaultState
+			}))
+		end
+
+
 	bullet.alpha = config.alpha--прозрачность
 
 	if bullet.alpha == nil then
@@ -91,6 +154,10 @@ function EnemyBullet:update(dt)
 
     self.x = self.x + self.vx * dt
     self.y = self.y + self.vy * dt
+--анимация	
+	if self.animationSet then
+			self.animationSet:update(dt)
+		end	
 
     if self.rotateToVelocity
         and (self.vx ~= 0 or self.vy ~= 0)
@@ -130,6 +197,48 @@ function EnemyBullet:getHitbox()
 end
 
 function EnemyBullet:draw()
+---аниммация
+	if self.animationSet then
+			local animation = self.animationSet:getCurrentAnimation()
+			local image = nil
+
+			if animation then
+				image = animation:getCurrentImage()
+			end
+
+			if image then
+				local scaleX = self.w / image:getWidth()
+				local scaleY = self.h / image:getHeight()
+
+				if self.rotateToVelocity then
+					self.animationSet:draw(
+						self.x + self.w / 2,
+						self.y + self.h / 2,
+						self.rotation,
+						scaleX,
+						scaleY,
+						image:getWidth() / 2,
+						image:getHeight() / 2,
+						self.alpha
+					)
+				else
+					self.animationSet:draw(
+						self.x,
+						self.y,
+						0,
+						scaleX,
+						scaleY,
+						0,
+						0,
+						self.alpha
+					)
+				end
+
+				return
+			end
+		end
+
+
     if self.image then
 		love.graphics.setColor(1, 1, 1, self.alpha)
 ---Старый блок без учета полета по дуге	
