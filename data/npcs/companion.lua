@@ -21,6 +21,14 @@ return {
     hates = {
         enemy = true
     },
+---можно без них, это логика для режима сражений	
+--отдана комманда актору - стоять
+--	command = "hold",
+--отдана комманда актору - бежать	
+	--command = "retreat",
+	--commandRetreatSpeed = 220
+--отдана комманда актору - вперед (обычный режим)	
+	--command = "advance"
 
     canMeleeAttack = true,
     meleeRange = 35,
@@ -34,6 +42,14 @@ return {
     color = {0.25, 0.55, 1.0},
 
     animations = {
+		idle = {
+			loop = true,
+			frameDuration = 0.12,
+			frames = {
+				"assets/npcs/companion/walk_1.png",
+				"assets/npcs/companion/walk_1.png"
+			}
+		},
         walk = {
             loop = true,
             frameDuration = 0.1,

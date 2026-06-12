@@ -100,7 +100,7 @@ return {
 					x = 650,
 					y = 360,
 					---время появления. Если не указано то стандартное (20)
-					appearAfter = 10,
+					appearAfter = 2,
 					ShowTimer = true	
 				},
             enemies = {			

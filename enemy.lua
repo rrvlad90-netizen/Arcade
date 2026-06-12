@@ -137,6 +137,7 @@ end
 -- чтобы даже мокапом было видно: враг летит, атакует, умер и т.д.
 local function getStateFallbackColor(state, baseColor)
     local stateColors = {
+		idle = baseColor,
         walk = baseColor,
         fly = {0.45, 0.9, 1.0},
         attack = {1.0, 0.45, 0.25},
@@ -373,6 +374,26 @@ function Enemy:new(config, x, groundTop)
     enemy.followSpeed = config.followSpeed
         or config.follow_speed
         or enemy.speed		
+			
+-- Команда актору (отдельно сделаем кнопки под это)
+    -- advance — обычное поведение.
+    -- hold    — стоять на месте и атаковать только если цель в радиусе.
+    -- retreat — убегать, не атакуя.
+    enemy.command = config.command
+        or config.actorCommand
+        or config.actor_command
+        or "advance"
+
+    enemy.commandTimer = 0
+    enemy.commandDirection = nil
+
+    -- Скорость отступления по приказу retreat.
+    enemy.commandRetreatSpeed = config.commandRetreatSpeed
+        or config.command_retreat_speed
+        or config.retreatCommandSpeed
+        or config.retreat_command_speed
+        or enemy.speed		
+		
 		
 -- Направление движения и атаки.
     -- -1: всегда влево.
@@ -680,6 +701,45 @@ function Enemy:setState(state)
     end
 end
 
+---функции комманд актору (для нпс нужно)
+function Enemy:setCommand(command, duration, direction)
+    self.command = command or "advance"
+    self.commandTimer = duration or 0
+    self.commandDirection = direction
+end
+
+function Enemy:clearCommand()
+    self.command = "advance"
+    self.commandTimer = 0
+    self.commandDirection = nil
+end
+
+function Enemy:updateCommandTimer(dt)
+    if self.commandTimer <= 0 then
+        return
+    end
+
+    self.commandTimer = self.commandTimer - dt
+
+    if self.commandTimer <= 0 then
+        self:clearCommand()
+    end
+end
+
+function Enemy:isCommandRetreat()
+    return self.command == "retreat"
+end
+
+function Enemy:isCommandHold()
+    return self.command == "hold"
+end
+
+function Enemy:isCommandAdvance()
+    return self.command == "advance"
+end
+
+-----------------------
+
 function Enemy:isAlive()
     return not self.dead
 end
@@ -819,6 +879,32 @@ function Enemy:tryTurnToPlayer(player)
     return self:turnToDirection(direction)
 end
 
+-----функцию отступления по приказу
+function Enemy:updateRetreatCommand(dt, target)
+    local direction = self.commandDirection
+
+    if not direction then
+        if target then
+            -- Убегаем от цели.
+            direction = -self:getDirectionToPlayer(target)
+        else
+            -- Если цели нет, убегаем назад относительно текущего взгляда.
+            direction = -(self.facingDirection or -1)
+        end
+    end
+
+    if direction == 0 then
+        direction = -1
+    end
+
+    self.facingDirection = direction
+    self.x = self.x + direction * self.commandRetreatSpeed * dt
+
+    self:updateAnimation(dt)
+
+    return true
+end
+
 -- Возвращает базовое движение врага:
 -- наземный враг возвращается в walk,
 -- летающий — в fly.
@@ -828,6 +914,12 @@ function Enemy:getMoveState()
     end
 
     return "walk"
+end
+----функцию состояния “готов к действию”
+function Enemy:isReadyForAction()
+    return self.state == "walk"
+        or self.state == "fly"
+        or self.state == "idle"
 end
 
 -- Может ли враг сейчас нанести контактный урон игроку.
@@ -966,9 +1058,9 @@ function Enemy:tryMeleeAttack(player, dt)
         return false
     end
 
-    if self.state ~= "walk" and self.state ~= "fly" then
-        return false
-    end
+	if not self:isReadyForAction() then
+		return false
+	end
 
     if not self:isPlayerInMeleeRange(player) then
         return false
@@ -1036,9 +1128,9 @@ function Enemy:tryShoot(player, dt)
         return false
     end
 
-    if self.state ~= "walk" and self.state ~= "fly" then
-        return false
-    end
+	if not self:isReadyForAction() then
+		return false
+	end
 	
 	---в какую сторону стрелять	
 	if not self:isPlayerInAttackDirection(player) then
@@ -1263,9 +1355,11 @@ function Enemy:tryJumpAttack(player, dt)
         return false
     end
 
-    if self.state ~= "walk" then
-        return false
-    end
+
+--Прыгает в walk и idle. Если нужен только walk то idle убрать
+	if self.state ~= "walk" and self.state ~= "idle" then
+		return false
+	end
 
     if self:getDistanceToPlayer(player) > self.jumpAttackRange then
         return false
@@ -1300,6 +1394,8 @@ function Enemy:update(dt, player, targetGroups)
 
     self.lastPlayer = player
     self.currentTarget = target
+	---время действия комманды (для нпс)
+	self:updateCommandTimer(dt)
 
     self.previousX = self.x
     self.previousY = self.y
@@ -1308,6 +1404,13 @@ function Enemy:update(dt, player, targetGroups)
         self:updateAnimation(dt)
         return
     end
+-- Приказ retreat полностью отключает атаки.
+    -- Актор просто убегает.
+    if self:isCommandRetreat() then
+        self:updateRetreatCommand(dt, target)
+        return
+    end	
+	
 ---CЛЕДОВАНИЕ ЗА ИГРОКОМ	
 -- если есть цель — атакуем/идём к цели
 -- если цели нет, но это npc-follow — идём к игроку
@@ -1383,27 +1486,35 @@ function Enemy:update(dt, player, targetGroups)
         return
     end
 
+-- Приказ hold: не двигаемся, но атаки выше всё ещё работают.
+	if self:isCommandHold() then
+		self:setState("idle")
+		self:updateAnimation(dt)
+		return
+	end
+
 --если нужно разворачиваемся
 -- Основное движение walk/fly.
-    if self.state == "walk" or self.state == "fly" then
-        -- Если MoveDirection = 0 и игрок с другой стороны,
+if self:isReadyForAction() then --если в состоянни, готов к движению
+        -- Если MoveDirection = 0 и цель с другой стороны,
         -- сначала проигрываем turn-анимацию.
         if self:tryTurnToPlayer(target) then
             self:updateAnimation(dt)
             return
         end
+
         if self:tryJumpAttack(target, dt) then
             self:updateAnimation(dt)
             return
         end
 
-		if self:tryMeleeAttack(target, dt) then
+        if self:tryMeleeAttack(target, dt) then
             self:updateAnimation(dt)
             return
         end
 
-        -- Если враг уже в melee-дистанции, он ждёт cooldown удара
-        -- и не проходит сквозь игрока.
+        -- Если актор уже в melee-дистанции, он ждёт cooldown удара
+        -- и не проходит сквозь цель.
         if self:isPlayerInMeleeRange(target) then
             self:updateAnimation(dt)
             return
@@ -1419,42 +1530,29 @@ function Enemy:update(dt, player, targetGroups)
             return
         end
 
-        if self.state == "walk" or self.state == "fly" then
-            local moveDirection = self:getMoveDirection(target)
+        -- ВАЖНО:
+        -- hold стоит только здесь, после всех атак.
+        -- Он запрещает движение, но не запрещает атаковать.
+        if self:isCommandHold() then
+            self:updateAnimation(dt)
+            return
+        end
+
+        if not target and self:tryFollowPlayer(dt, player) then
+            self:updateAnimation(dt)
+            return
+        end
+
+--Перед обычным движением возвращаем walk/fly
+		if self:isReadyForAction() then
+			local moveDirection = self:getMoveDirection(target)
+
+			self:setState(self:getMoveState())
 
 			self.facingDirection = moveDirection
 			self.x = self.x + moveDirection * self.speed * dt
-        end
-
-    -- Отход назад.
-    elseif self.state == "retreat" then
-			local move = self.retreatSpeed * dt
-
-			self.x = self.x - self.facingDirection * move
-			self.retreatMoved = self.retreatMoved + move
-
-        if self.retreatMoved >= self.retreatDistance then
-            self.retreatDistance = self.defaultRetreatDistance or self.retreatDistance
-
-            if self.retreatThenTaunt then
-                self.tauntTimer = self.tauntDuration
-                self:setState("taunt")
-                playRandomSound(self.sounds.taunt)
-            else
-                self:setState(self:getMoveState())
-            end
-        end
-
-    -- Taunt после retreat.
-    elseif self.state == "taunt" then
-        self.tauntTimer = self.tauntTimer - dt
-
-        if self.tauntTimer <= 0 then
-            self:setState(self:getMoveState())
-        end
-    end
-
-    self:updateAnimation(dt)
+		end
+	end	
 end
 
 -- Обновляет текущую анимацию и обрабатывает её events.
