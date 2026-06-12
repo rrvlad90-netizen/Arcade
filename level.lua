@@ -13,6 +13,7 @@ local DecorModels = require("data.decors")
 local HazardModels = require("data.hazards")
 local PlatformModels = require("data.platforms")
 local LevelEndModels = require("data.level_ends")
+local NpcModels = require("data.npcs")
 
 local Level = {}
 Level.__index = Level
@@ -81,7 +82,13 @@ function Level:new(config)
 		DecorModels,
 		Decor,
 		"decor"
-	)	
+	)
+--NPC уровня	
+	level.npcs = ModelResolver.resolveList(
+        config.npcs,
+        NpcModels,
+        "npc"
+    )	
 -- Объект конца уровня.
     -- Если его нет в конфиге уровня, уровень может завершаться старой логикой.
 	level.levelEnd = nil

@@ -4,6 +4,7 @@ return {
     BatBomberDrop = require("data.projectiles.bat_bomber_drop"),
 	ArcArrow = require("data.projectiles.arc_arrow"),
 	EnemyFireball = require("data.projectiles.enemyfireball"),
+	CompanionMeleeProjectile = require("data.projectiles.companion_melee_projectile"), --npc проджектайл	
 		
 --Вблизи
 	MeleeProjectile = require("data.projectiles.melee_projectile")

@@ -1,5 +1,6 @@
 local AnimationSet = require("animation_set")
 local ProjectileModels = require("data.projectiles")
+local Targeting = require("targeting")
 
 local Enemy = {}
 Enemy.__index = Enemy
@@ -330,6 +331,49 @@ function Enemy:new(config, x, groundTop)
     enemy.w = config.w or 38
     enemy.h = config.h or 48
 		
+-- Тип существа:
+    -- enemy  — враг
+    -- npc    — союзник/нейтрал
+    -- player — игрок, но игрок обычно создаётся в player.lua
+    enemy.entityType = config.entityType
+        or config.entity_type
+        or "enemy"	
+		
+			
+--- враг по умолчанию ненавидит игрока и npc, а npc по умолчанию ненавидит врагов		
+	local defaultHates = {
+			player = true,
+			npc = true
+		}
+
+		if enemy.entityType == "npc" then
+			defaultHates = {
+				enemy = true
+			}
+		end
+
+		enemy.hates = Targeting.buildTargetSet(
+			config.hates
+				or config.hostileTo
+				or config.hostile_to
+				or config.attackTargets
+				or config.attack_targets,
+			defaultHates
+		)		
+		
+		
+-- NPC может следовать за игроком, если сейчас нет боевой цели.
+    enemy.followPlayer = config.followPlayer == true
+        or config.follow_player == true
+
+    enemy.followDistance = config.followDistance
+        or config.follow_distance
+        or 90
+
+    enemy.followSpeed = config.followSpeed
+        or config.follow_speed
+        or enemy.speed		
+		
 -- Направление движения и атаки.
     -- -1: всегда влево.
     --  1: всегда вправо.
@@ -655,6 +699,57 @@ function Enemy:getDirectionToPlayer(player)
     end
 
     return 1
+end
+
+----функция выбора цели
+function Enemy:selectTarget(player, targetGroups)
+    local target = Targeting.findNearestTarget(self, targetGroups)
+
+    if target then
+        return target
+    end
+
+    if self.hates
+        and self.hates.player
+        and Targeting.isAlive(player)
+    then
+        return player
+    end
+
+    return nil
+end
+
+
+--функция следования NPC за игроком
+function Enemy:tryFollowPlayer(dt, player)
+    if not self.followPlayer or not player then
+        return false
+    end
+
+    local enemyCenterX = self.x + self.w / 2
+    local playerCenterX = player.x + player.w / 2
+    local distanceX = math.abs(enemyCenterX - playerCenterX)
+
+    if distanceX <= self.followDistance then
+        return false
+    end
+
+    local direction = -1
+
+    if playerCenterX > enemyCenterX then
+        direction = 1
+    end
+
+    if self.MoveDirection == 0 then
+        if self:turnToDirection(direction) then
+            return true
+        end
+    end
+
+    self.facingDirection = direction
+    self.x = self.x + direction * self.followSpeed * dt
+
+    return true
 end
 
 -- Куда враг должен идти.
@@ -1197,8 +1292,11 @@ function Enemy:tryJumpAttack(player, dt)
 end
 
 -- Основная state machine врага.
-function Enemy:update(dt, player)
+function Enemy:update(dt, player, targetGroups)
+    local target = self:selectTarget(player, targetGroups)
+
     self.lastPlayer = player
+    self.currentTarget = target
 
     self.previousX = self.x
     self.previousY = self.y
@@ -1207,6 +1305,13 @@ function Enemy:update(dt, player)
         self:updateAnimation(dt)
         return
     end
+---CЛЕДОВАНИЕ ЗА ИГРОКОМ	
+-- если есть цель — атакуем/идём к цели
+-- если цели нет, но это npc-follow — идём к игроку
+	if not target and self:tryFollowPlayer(dt, player) then
+            self:updateAnimation(dt)
+            return
+        end
 
     -- Лёгкое покачивание flying-врагов.
     if self.flying then
@@ -1280,39 +1385,39 @@ function Enemy:update(dt, player)
     if self.state == "walk" or self.state == "fly" then
         -- Если MoveDirection = 0 и игрок с другой стороны,
         -- сначала проигрываем turn-анимацию.
-        if self:tryTurnToPlayer(player) then
+        if self:tryTurnToPlayer(target) then
             self:updateAnimation(dt)
             return
         end
-        if self:tryJumpAttack(player, dt) then
+        if self:tryJumpAttack(target, dt) then
             self:updateAnimation(dt)
             return
         end
 
-		if self:tryMeleeAttack(player, dt) then
+		if self:tryMeleeAttack(target, dt) then
             self:updateAnimation(dt)
             return
         end
 
         -- Если враг уже в melee-дистанции, он ждёт cooldown удара
         -- и не проходит сквозь игрока.
-        if self:isPlayerInMeleeRange(player) then
+        if self:isPlayerInMeleeRange(target) then
             self:updateAnimation(dt)
             return
         end
 
-        if self:tryDropProjectile(player, dt) then
+        if self:tryDropProjectile(target, dt) then
             self:updateAnimation(dt)
             return
         end
 
-        if self:tryShoot(player, dt) then
+        if self:tryShoot(target, dt) then
             self:updateAnimation(dt)
             return
         end
 
         if self.state == "walk" or self.state == "fly" then
-            local moveDirection = self:getMoveDirection(player)
+            local moveDirection = self:getMoveDirection(target)
 
 			self.facingDirection = moveDirection
 			self.x = self.x + moveDirection * self.speed * dt

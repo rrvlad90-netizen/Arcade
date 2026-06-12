@@ -104,6 +104,29 @@ function Effect:new(config)
     effect.damageEnemies = config.damageEnemies == true
         or config.damage_enemies == true
 
+----кого может дамажить
+	effect.damageTargets = config.damageTargets
+        or config.damage_targets
+
+    if not effect.damageTargets then
+        effect.damageTargets = {}
+
+        if effect.damagePlayer then
+            effect.damageTargets.player = true
+        end
+
+        if effect.damageEnemies then
+            effect.damageTargets.enemy = true
+        end
+
+        if config.damageNpc == true
+            or config.damageNPC == true
+            or config.damage_npc == true
+        then
+            effect.damageTargets.npc = true
+        end
+    end
+
     -- Чтобы эффект не наносил урон каждый кадр.
     effect.damageApplied = false	
 	
@@ -200,6 +223,13 @@ function Effect:new(config)
 
     return effect
 end
+
+----может дамажить цель
+function Effect:canDamageTarget(targetType)
+    return self.damageTargets
+        and self.damageTargets[targetType] == true
+end
+
 
 function Effect:getHitbox()
     return {

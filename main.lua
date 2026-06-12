@@ -7,7 +7,6 @@ local EffectModels = require("data.effects")
 local ModelResolver = require("model_resolver")
 local Levels = require("levels")
 
-
 local screenWidth = 800
 local screenHeight = 500
 
@@ -17,8 +16,10 @@ local level
 
 local playerProjectiles = {}
 local enemies = {}
+local npcs = {}
 local enemyBullets = {}
 local effects = {}
+
 
 local enemySpawnTimer = 0
 local score = 0
@@ -50,6 +51,14 @@ local function rectsOverlap(a, b)
         and b.x < a.x + a.w
         and a.y < b.y + b.h
         and b.y < a.y + a.h
+end
+---проверка цели
+local function getTargetGroups()
+    return {
+        player = {player},
+        enemy = enemies,
+        npc = npcs
+    }
 end
 
 -----дамаг эффекта (если есть) по радиусу
@@ -117,8 +126,7 @@ local function addProjectileImpactEffect(projectile)
 end
 
 
-
-----дамаг эффекта если есть
+------Проверка кого можетдамажить Эффект
 local function resolveEffectDamage(effect)
     if not effect:canApplyDamage() then
         return
@@ -126,7 +134,7 @@ local function resolveEffectDamage(effect)
 
     local damageCircle = effect:getDamageCircle()
 
-    if effect.damagePlayer
+    if effect:canDamageTarget("player")
         and player
         and not player.dead
         and player:canTakeDamage()
@@ -135,7 +143,7 @@ local function resolveEffectDamage(effect)
         player:takeDamage(effect.damage)
     end
 
-    if effect.damageEnemies then
+    if effect:canDamageTarget("enemy") then
         for _, enemy in ipairs(enemies) do
 			if projectile:canDamageTarget("enemy")
 				and enemy:isAlive()
@@ -147,6 +155,16 @@ local function resolveEffectDamage(effect)
             end
         end
     end
+	
+	if effect:canDamageTarget("npc") then
+		for _, npc in ipairs(npcs) do
+			if npc:isAlive()
+				and circleOverlapsRect(damageCircle, npc:getHitbox())
+			then
+				npc:takeDamage(effect.damage)
+			end
+		end
+	end	
 
     effect:markDamageApplied()
 end
@@ -305,6 +323,19 @@ local function switchToLevel(nextLevel)
     enemies = {} --очищаем врагов
 	enemyBullets = {} --очищаем пули врага
 	effects = {} --очищаем эффекты
+	npcs = {} --очищаем npcs
+
+	for _, npcConfig in ipairs(level.npcs or {}) do
+		table.insert(
+			npcs,
+			Enemy:new(
+				npcConfig,
+				npcConfig.x or player.x - 80,
+				level.groundTop
+			)
+		)
+	end
+
 	
     enemySpawnTimer = 0
 end
@@ -462,7 +493,7 @@ function love.update(dt)
 ---Цикл врагов и эффектов
 	for i = #enemies, 1, -1 do
 		local enemy = enemies[i]
-		enemy:update(dt, player)
+		enemy:update(dt, player, getTargetGroups())
 
 		local shotRequest = enemy:consumeShotRequest()
 
@@ -499,7 +530,17 @@ level:resolveEnemyPlatforms(enemies, rectsOverlap)
 -----------
 -----пули врага не могут прострелить возвышенность
 	level:removeProjectilesBlockedByPlatforms(enemyBullets, rectsOverlap)
+	
+--обновление NPC	
+	for i = #npcs, 1, -1 do
+		local npc = npcs[i]
 
+		npc:update(dt, player, getTargetGroups())
+
+		if npc:isRemovable() then
+			table.remove(npcs, i)
+		end
+	end	
 
 ----столкновеник с врагами
 for enemyIndex = #enemies, 1, -1 do
@@ -524,6 +565,26 @@ for enemyIndex = #enemies, 1, -1 do
 		end
     end
 end
+------Блок столкновения playerProjectiles с npc
+for npcIndex = #npcs, 1, -1 do
+    local npc = npcs[npcIndex]
+
+    if projectile:canDamageTarget("npc")
+        and npc:isAlive()
+        and rectsOverlap(projectile:getHitbox(), npc:getHitbox())
+    then
+        addProjectileImpactEffect(projectile)
+
+        if npc:takeDamage(projectile.damage or 1) then
+            -- score за npc обычно не даём
+        end
+
+        table.remove(playerProjectiles, projectileIndex)
+        break
+    end
+end
+
+
 ----Столкновение игрока с врагами
     local playerHitbox = player:getHitbox()
 
@@ -538,7 +599,6 @@ end
         end
     end
 	
-	
 ---обработка столкновений с ямами, шипами, лавой и т.д.
 level:resolvePlayerHazards(player, rectsOverlap)
 level:resolveEnemyHazards(enemies, rectsOverlap)
@@ -546,6 +606,7 @@ level:resolveEnemyHazards(enemies, rectsOverlap)
 ----обработка подбора аптечки
 level:resolvePlayerHealthPickups(player, rectsOverlap)	
 
+------Обработка попаданий
 ---------------столкновение вражеских пуль с игроком
 local playerHitboxForBullets = player:getHitbox()
 
@@ -562,6 +623,21 @@ for i = #enemyBullets, 1, -1 do
 		break
 	end
 end	
+
+---------------столкновение вражеских пуль с npc
+for npcIndex = #npcs, 1, -1 do
+    local npc = npcs[npcIndex]
+
+    if bullet:canDamageTarget("npc")
+        and npc:isAlive()
+        and rectsOverlap(bullet:getHitbox(), npc:getHitbox())
+    then
+        addProjectileImpactEffect(bullet)
+        npc:takeDamage(bullet.damage)
+        table.remove(enemyBullets, i)
+        break
+    end
+end
 	
 	
 
@@ -610,6 +686,10 @@ function love.draw()
     for _, enemy in ipairs(enemies) do
         enemy:draw()
     end
+---отрисовка npc	
+	for _, npc in ipairs(npcs) do
+		npc:draw()
+	end
 ---отрисовка вражеских пуль
 	for _, bullet in ipairs(enemyBullets) do
 		bullet:draw()
