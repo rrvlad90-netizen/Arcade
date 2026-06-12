@@ -1219,16 +1219,11 @@ function Enemy:tryShoot(player, dt)
         return false
     end
 
-	if not self:isReadyForAction() then
-		return false
-	end
-	
-	---в какую сторону стрелять	
-	if not self:isPlayerInAttackDirection(player) then
+    if not self:isReadyForAction() then
         return false
     end
 
-    if self:getDistanceToPlayer(player) > self.shootRange then
+    if not self:isTargetInShootRange(player) then
         return false
     end
 
@@ -1243,32 +1238,41 @@ function Enemy:tryShoot(player, dt)
     if math.random() > self.shootChance then
         return false
     end
----направление выстрела
-	local direction = self:getAttackDirection(player)
-	
-----проджектайлы
-	local projectile = self.bulletProjectile or {}
 
-	local projectileSpeed = projectile.speed
-		or projectile.bulletSpeed
-		or self.bulletSpeed
+    local projectile = resolveProjectileConfig(self.bulletProjectile) or {}
 
-	local projectileVx = projectile.vx
+    local enemyCenterX = self.x + self.w / 2
+    local enemyCenterY = self.y + self.h / 2
+    local targetCenterX = player.x + player.w / 2
+    local targetCenterY = player.y + player.h / 2
 
-	if projectileVx == nil then
-		projectileVx = projectileSpeed * direction
-	end
+    local direction = self.facingDirection or -1
 
-	local projectileW = projectile.w or self.bulletW
-	local projectileH = projectile.h or self.bulletH
+    if self.MoveDirection == 0 then
+        if targetCenterX > enemyCenterX then
+            direction = 1
+        else
+            direction = -1
+        end
 
---- рассчет направление и скорость проджектайла
-	self.pendingAttackProjectile = copyTable(projectile)
+        self.facingDirection = direction
+    elseif self.MoveDirection == -1 or self.MoveDirection == 1 then
+        direction = self.MoveDirection
+        self.facingDirection = direction
+    end
 
-    self.pendingAttackProjectile.x = projectile.x
-    self.pendingAttackProjectile.y = projectile.y
-    self.pendingAttackProjectile.w = projectile.w
-    self.pendingAttackProjectile.h = projectile.h
+    projectile.w = projectile.w or self.bulletW
+    projectile.h = projectile.h or self.bulletH
+
+    projectile.x = projectile.x
+        or enemyCenterX - projectile.w / 2
+
+    projectile.y = projectile.y
+        or enemyCenterY - projectile.h / 2
+
+    projectile.damage = projectile.damage or self.bulletDamage
+    projectile.image = projectile.image or self.bulletImage
+    projectile.color = projectile.color
 
     local projectileSpeed = projectile.speed
         or projectile.bulletSpeed
@@ -1278,32 +1282,25 @@ function Enemy:tryShoot(player, dt)
     if projectile.aimAtTarget == true
         or projectile.aim_at_target == true
     then
-        local projectileCenterX = self.pendingAttackProjectile.x + self.pendingAttackProjectile.w / 2
-        local projectileCenterY = self.pendingAttackProjectile.y + self.pendingAttackProjectile.h / 2
-
-        local targetCenterX = player.x + player.w / 2
-        local targetCenterY = player.y + player.h / 2
+        local projectileCenterX = projectile.x + projectile.w / 2
+        local projectileCenterY = projectile.y + projectile.h / 2
 
         local dx = targetCenterX - projectileCenterX
         local dy = targetCenterY - projectileCenterY
-
         local length = math.sqrt(dx * dx + dy * dy)
 
         if length <= 0 then
             length = 1
         end
 
-        self.pendingAttackProjectile.vx = dx / length * projectileSpeed
-        self.pendingAttackProjectile.vy = dy / length * projectileSpeed
+        projectile.vx = dx / length * projectileSpeed
+        projectile.vy = dy / length * projectileSpeed
     else
-        self.pendingAttackProjectile.vx = projectileSpeed * direction
-        self.pendingAttackProjectile.vy = projectile.vy or 0
+        projectile.vx = projectile.vx or projectileSpeed * direction
+        projectile.vy = projectile.vy or 0
     end
 
-	self.pendingAttackProjectile.damage = projectile.damage or self.bulletDamage
-	self.pendingAttackProjectile.image = projectile.image or self.bulletImage
-	self.pendingAttackProjectile.color = projectile.color
-
+    self.pendingAttackProjectile = projectile
     self:setState("attack")
 
     return true

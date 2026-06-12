@@ -17,6 +17,8 @@ return {
 	shootRange = 500,
 	shootChance = 1,
 	shootCooldown = 1.2,
+	------для теста
+	shootStartDelay = 0,
 
 	bulletModel = "DiagonalDownProjectile",
 	bulletSpeed = 220,

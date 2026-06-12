@@ -8,7 +8,7 @@ return {
     -- Y задаём здесь: положительное значение летит вниз.
     vy = 180,
 
-    gravity = 0,
+    gravity = 700,
 
     rotateToVelocity = true,
 
@@ -19,8 +19,14 @@ return {
         npc = true
     },
 
+--    rotateToVelocity = true,
+
+    -- Если упадёт в землю/возвышенность — исчезнет с эффектом.
+    collideGround = true,
+    collidePlatforms = true,
+
     impactEffect = {
-        model = "Explosion"
+        model = "ExplosionDamage"
     },
 
     impactOffsetX = -32,
