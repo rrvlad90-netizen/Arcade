@@ -165,3 +165,19 @@ bullet существует только внутри первого for. После end он исчезает. Поэтому:
 lua
 attempt to index global 'projectile' / 'bullet' nil value
 После замены блок будет правильный: одна пуля проверяется и по игроку, и по NPC внутри одного цикла.
+
+
+
+
+Важно: проверка NPC должна быть внутри этого цикла:
+
+lua
+for projectileIndex = #playerProjectiles, 1, -1 do
+    local projectile = playerProjectiles[projectileIndex]
+
+    -- enemy
+    -- npc
+end
+Не отдельно ниже.
+
+После этого projectile всегда будет локальной переменной и ошибка на втором уровне должна уйти.

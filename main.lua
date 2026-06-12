@@ -541,45 +541,42 @@ level:resolveEnemyPlatforms(enemies, rectsOverlap)
 		end
 	end	
 
-----столкновеник с врагами
-for enemyIndex = #enemies, 1, -1 do
-    local enemy = enemies[enemyIndex]
-    local enemyHitbox = enemy:getHitbox()
+---------------столкновение projectiles игрока с врагами и npc
+for projectileIndex = #playerProjectiles, 1, -1 do
+    local projectile = playerProjectiles[projectileIndex]
+    local projectileRemoved = false
 
-    for projectileIndex = #playerProjectiles, 1, -1 do
-        local projectile = playerProjectiles[projectileIndex]
+    if projectile:canDamageTarget("enemy") then
+        for _, enemy in ipairs(enemies) do
+            if enemy:isAlive()
+                and rectsOverlap(projectile:getHitbox(), enemy:getHitbox())
+            then
+                addProjectileImpactEffect(projectile)
 
-------Блок столкновения playerProjectiles с врагами
-		if enemy:isAlive()
-			and rectsOverlap(enemyHitbox, projectile:getHitbox())
-		then
-			addProjectileImpactEffect(projectile)
+                if enemy:takeDamage(projectile.damage or 1) then
+                    score = score + enemy.score
+                end
 
-			if enemy:takeDamage(projectile.damage or 1) then
-				score = score + enemy.score
-			end
-
-			table.remove(playerProjectiles, projectileIndex)
-			break
-		end
-    end
-end
-------Блок столкновения playerProjectiles с npc
-for npcIndex = #npcs, 1, -1 do
-    local npc = npcs[npcIndex]
-
-    if projectile:canDamageTarget("npc")
-        and npc:isAlive()
-        and rectsOverlap(projectile:getHitbox(), npc:getHitbox())
-    then
-        addProjectileImpactEffect(projectile)
-
-        if npc:takeDamage(projectile.damage or 1) then
-            -- score за npc обычно не даём
+                table.remove(playerProjectiles, projectileIndex)
+                projectileRemoved = true
+                break
+            end
         end
+    end
 
-        table.remove(playerProjectiles, projectileIndex)
-        break
+    if not projectileRemoved and projectile:canDamageTarget("npc") then
+        for _, npc in ipairs(npcs) do
+            if npc:isAlive()
+                and rectsOverlap(projectile:getHitbox(), npc:getHitbox())
+            then
+                addProjectileImpactEffect(projectile)
+                npc:takeDamage(projectile.damage or 1)
+
+                table.remove(playerProjectiles, projectileIndex)
+                projectileRemoved = true
+                break
+            end
+        end
     end
 end
 
