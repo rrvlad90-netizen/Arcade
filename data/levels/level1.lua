@@ -61,12 +61,6 @@ return {
 					minSpawnDelay = 1.8,
 					maxSpawnDelay = 3.2,
 
-					npcs = {
-						{
-							model = "Companion",
-							x = 180
-						}
-					},
 					enemies = {
 						{
 							model = "Bat",

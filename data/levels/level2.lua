@@ -24,6 +24,7 @@ return {
             groundVisualY = 395,
             groundVisualHeight = 130,
 
+
             enemies = {
 				{
 					model = "Goblin",
@@ -40,6 +41,12 @@ return {
 					x = 900,
 					y = 150,
 					spawnDistance = 700
+				}
+			},
+			npcs = {
+				{
+					model = "Companion",
+					x = 10
 				}
 			},
 			levelEnd = {
